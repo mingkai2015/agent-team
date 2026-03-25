@@ -1,0 +1,1640 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Team - IT Delivery Dashboard</title>
+    <style>
+        :root {
+            --bg-primary: #0d0d12;
+            --bg-secondary: #16161e;
+            --bg-tertiary: #1e1e28;
+            --accent-cyan: #00d4ff;
+            --accent-purple: #7b2ff7;
+            --accent-green: #00ff88;
+            --accent-orange: #ff9f43;
+            --accent-red: #ff6b6b;
+            --text-primary: #fff;
+            --text-secondary: #8b8b9a;
+            --text-muted: #5a5a6e;
+            --border-color: rgba(255, 255, 255, 0.06);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            min-height: 100vh;
+            color: var(--text-primary);
+        }
+
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 240px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            padding: 24px 0;
+            position: fixed;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo {
+            padding: 0 24px 32px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 24px;
+        }
+
+        .logo h1 {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo span {
+            font-size: 11px;
+            color: var(--text-muted);
+            display: block;
+            margin-top: 4px;
+        }
+
+        .nav-item {
+            padding: 12px 24px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-item:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .nav-item.active {
+            color: var(--accent-cyan);
+            background: rgba(0, 212, 255, 0.08);
+            border-right: 2px solid var(--accent-cyan);
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            opacity: 0.7;
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: 240px;
+            padding: 32px;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .page-header {
+            margin-bottom: 32px;
+        }
+
+        .page-header h2 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .page-header p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 14px;
+            color: var(--text-primary);
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .priority-badges {
+            display: flex;
+            gap: 8px;
+        }
+
+        .priority-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .priority-badge.p1 {
+            background: rgba(255, 107, 107, 0.1);
+            color: var(--accent-red);
+        }
+
+        .priority-badge.p1.active {
+            background: var(--accent-red);
+            color: #fff;
+        }
+
+        .priority-badge.p2 {
+            background: rgba(255, 159, 67, 0.1);
+            color: var(--accent-orange);
+        }
+
+        .priority-badge.p2.active {
+            background: var(--accent-orange);
+            color: #000;
+        }
+
+        .priority-badge.p3 {
+            background: rgba(139, 139, 154, 0.1);
+            color: var(--text-secondary);
+        }
+
+        .priority-badge.p3.active {
+            background: var(--text-secondary);
+            color: #000;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 24px rgba(0, 212, 255, 0.25);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-success {
+            background: rgba(0, 255, 136, 0.15);
+            color: var(--accent-green);
+            border: 1px solid var(--accent-green);
+        }
+
+        .btn-success:hover {
+            background: rgba(0, 255, 136, 0.25);
+        }
+
+        .btn-danger {
+            background: rgba(255, 107, 107, 0.15);
+            color: var(--accent-red);
+            border: 1px solid var(--accent-red);
+        }
+
+        .btn-danger:hover {
+            background: rgba(255, 107, 107, 0.25);
+        }
+
+        .task-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .task-table th,
+        .task-table td {
+            padding: 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .task-table th {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .task-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .task-table .title-cell {
+            font-weight: 500;
+        }
+
+        .task-table .desc-cell {
+            color: var(--text-secondary);
+            font-size: 13px;
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-badge.completed {
+            background: rgba(0, 255, 136, 0.15);
+            color: var(--accent-green);
+        }
+
+        .status-badge.pending {
+            background: rgba(0, 212, 255, 0.15);
+            color: var(--accent-cyan);
+        }
+
+        .status-badge.rejected {
+            background: rgba(255, 107, 107, 0.15);
+            color: var(--accent-red);
+        }
+
+        .status-badge.approved {
+            background: rgba(123, 47, 247, 0.15);
+            color: var(--accent-purple);
+        }
+
+        .status-badge.analyzing {
+            background: rgba(255, 159, 67, 0.15);
+            color: var(--accent-orange);
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:hover {
+            color: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+        }
+
+        .progress-bar {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .progress-step {
+            width: 24px;
+            height: 4px;
+            background: var(--bg-tertiary);
+            border-radius: 2px;
+        }
+
+        .progress-step.completed {
+            background: var(--accent-green);
+        }
+
+        .progress-step.active {
+            background: var(--accent-cyan);
+        }
+
+        .approval-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .approval-modal.show {
+            display: flex;
+        }
+
+        .confirm-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            backdrop-filter: blur(4px);
+        }
+
+        .confirm-modal.show {
+            display: flex;
+        }
+
+        .confirm-dialog {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 32px;
+            width: 420px;
+            text-align: center;
+            position: relative;
+            animation: confirmPop 0.3s ease;
+        }
+
+        @keyframes confirmPop {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .confirm-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            margin: 0 auto 16px;
+        }
+
+        .confirm-icon.approve {
+            background: rgba(0, 255, 136, 0.15);
+            color: var(--accent-green);
+            border: 2px solid var(--accent-green);
+        }
+
+        .confirm-icon.reject {
+            background: rgba(255, 107, 107, 0.15);
+            color: var(--accent-red);
+            border: 2px solid var(--accent-red);
+        }
+
+        .confirm-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .confirm-message {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        .confirm-form {
+            text-align: left;
+            margin-bottom: 24px;
+        }
+
+        .confirm-form .form-group {
+            margin-bottom: 16px;
+        }
+
+        .confirm-form .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .confirm-form .form-group input,
+        .confirm-form .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 14px;
+            color: var(--text-primary);
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .confirm-form .form-group input:focus,
+        .confirm-form .form-group textarea:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+        }
+
+        .confirm-form .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .confirm-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .confirm-actions .btn {
+            flex: 1;
+            padding: 14px;
+            font-size: 15px;
+            border-radius: 10px;
+        }
+
+        .btn-cancel {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-cancel:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+        }
+
+        .btn-confirm {
+            background: var(--accent-cyan);
+            color: #000;
+            font-weight: 600;
+        }
+
+        .btn-confirm:hover {
+            background: #00b8e6;
+        }
+
+        .btn-confirm.reject {
+            background: var(--accent-red);
+            color: #fff;
+        }
+
+        .btn-confirm.reject:hover {
+            background: #e85555;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(13, 13, 18, 0.9);
+            border-radius: 20px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 10;
+        }
+
+        .loading-overlay.show {
+            display: flex;
+        }
+
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--accent-cyan);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-overlay span {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            padding: 16px 24px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            z-index: 3000;
+            transform: translateX(120%);
+            transition: transform 0.3s ease;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            border-color: var(--accent-green);
+        }
+
+        .notification.success span:first-child {
+            color: var(--accent-green);
+        }
+
+        .notification.error {
+            border-color: var(--accent-red);
+        }
+
+        .notification.error span:first-child {
+            color: var(--accent-red);
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
+        }
+
+        .phase-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+
+        .phase-badge.done {
+            background: rgba(0, 255, 136, 0.15);
+            color: var(--accent-green);
+        }
+
+        .phase-badge.current {
+            background: rgba(0, 212, 255, 0.15);
+            color: var(--accent-cyan);
+        }
+
+        .artifact-section {
+            margin-top: 24px;
+        }
+
+        .artifact-section h4 {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .artifact-content {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 16px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-family: 'SF Mono', monospace;
+        }
+
+        .approval-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .approval-actions .btn {
+            flex: 1;
+        }
+
+        .trace-timeline {
+            position: relative;
+            padding-left: 24px;
+        }
+
+        .trace-timeline::before {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--border-color);
+        }
+
+        .trace-item {
+            position: relative;
+            padding: 16px 0;
+        }
+
+        .trace-item::before {
+            content: '';
+            position: absolute;
+            left: -20px;
+            top: 20px;
+            width: 12px;
+            height: 12px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 50%;
+        }
+
+        .trace-item.success::before {
+            border-color: var(--accent-green);
+            background: var(--accent-green);
+        }
+
+        .trace-item.error::before {
+            border-color: var(--accent-red);
+            background: var(--accent-red);
+        }
+
+        .trace-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .trace-agent {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .trace-duration {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .trace-phase {
+            font-size: 12px;
+            color: var(--accent-cyan);
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .metric-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .metric-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .metric-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .grade-distribution {
+            display: flex;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .grade-item {
+            flex: 1;
+            text-align: center;
+            padding: 16px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+        }
+
+        .grade-letter {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .grade-A { color: var(--accent-green); }
+        .grade-B { color: var(--accent-cyan); }
+        .grade-C { color: var(--accent-orange); }
+        .grade-D { color: var(--accent-red); }
+        .grade-F { color: var(--accent-red); }
+
+        .grade-count {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 48px;
+            color: var(--text-muted);
+        }
+
+        .empty-state h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="logo">
+                <h1>Agent Team</h1>
+                <span>AI IT Delivery System</span>
+            </div>
+            <nav>
+                <div class="nav-item active" data-page="dashboard">
+                    <span>📊</span> 任务概览
+                </div>
+                <div class="nav-item" data-page="submit">
+                    <span>📝</span> 提交需求
+                </div>
+                <div class="nav-item" data-page="approvals">
+                    <span>✅</span> 审批管理
+                </div>
+                <div class="nav-item" data-page="traces">
+                    <span>🔍</span> 链路追踪
+                </div>
+                <div class="nav-item" data-page="metrics">
+                    <span>📈</span> 效能指标
+                </div>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <div id="dashboard" class="page active">
+                <div class="page-header">
+                    <h2>任务概览</h2>
+                    <p>查看所有需求的处理状态和进度</p>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">所有任务</span>
+                    </div>
+                    <table class="task-table">
+                        <thead>
+                            <tr>
+                                <th>需求</th>
+                                <th>状态</th>
+                                <th>进度与审批</th>
+                                <th>处理人</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="taskTableBody">
+                            <tr>
+                                <td colspan="6" class="empty-state">加载中...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="submit" class="page">
+                <div class="page-header">
+                    <h2>提交需求</h2>
+                    <p>创建新的需求并启动 AI 交付流程</p>
+                </div>
+                <div class="card">
+                    <form id="requirementForm">
+                        <div class="form-group">
+                            <label>需求标题</label>
+                            <input type="text" id="title" placeholder="例如：库存预警系统" required>
+                        </div>
+                        <div class="form-group">
+                            <label>需求描述</label>
+                            <textarea id="description" placeholder="请详细描述需求功能、业务流程、约束条件等..." required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>优先级</label>
+                            <div class="priority-badges">
+                                <div class="priority-badge p1 active" data-value="P1" onclick="selectPriority(this)">P1 - 紧急</div>
+                                <div class="priority-badge p2" data-value="P2" onclick="selectPriority(this)">P2 - 普通</div>
+                                <div class="priority-badge p3" data-value="P3" onclick="selectPriority(this)">P3 - 低</div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="submitBtn">提交需求</button>
+                    </form>
+                </div>
+            </div>
+
+            <div id="approvals" class="page">
+                <div class="page-header">
+                    <h2>审批管理</h2>
+                    <p>审核并批准各阶段的产出物</p>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">待审批任务</span>
+                    </div>
+                    <table class="task-table">
+                        <thead>
+                            <tr>
+                                <th>需求</th>
+                                <th>当前阶段</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="approvalTableBody">
+                            <tr>
+                                <td colspan="4" class="empty-state">加载中...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="traces" class="page">
+                <div class="page-header">
+                    <h2>链路追踪</h2>
+                    <p>查看 Agent 调用链和执行详情</p>
+                </div>
+                <div class="card">
+                    <div id="traceList"></div>
+                </div>
+            </div>
+
+            <div id="metrics" class="page">
+                <div class="page-header">
+                    <h2>效能指标</h2>
+                    <p>团队绩效和任务质量评估</p>
+                </div>
+                <div class="metrics-grid" id="metricsGrid">
+                    <div class="metric-card">
+                        <div class="metric-value" id="totalTasks">-</div>
+                        <div class="metric-label">总任务数</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="avgScore">-</div>
+                        <div class="metric-label">平均评分</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="completedTasks">-</div>
+                        <div class="metric-label">已完成</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="pendingTasks">-</div>
+                        <div class="metric-label">待审批</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title" style="margin-bottom: 16px;">评分分布</div>
+                    <div class="grade-distribution" id="gradeDistribution">
+                        <div class="grade-item">
+                            <div class="grade-letter grade-A">A</div>
+                            <div class="grade-count" id="gradeA">0</div>
+                        </div>
+                        <div class="grade-item">
+                            <div class="grade-letter grade-B">B</div>
+                            <div class="grade-count" id="gradeB">0</div>
+                        </div>
+                        <div class="grade-item">
+                            <div class="grade-letter grade-C">C</div>
+                            <div class="grade-count" id="gradeC">0</div>
+                        </div>
+                        <div class="grade-item">
+                            <div class="grade-letter grade-D">D</div>
+                            <div class="grade-count" id="gradeD">0</div>
+                        </div>
+                        <div class="grade-item">
+                            <div class="grade-letter grade-F">F</div>
+                            <div class="grade-count" id="gradeF">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="approval-modal" id="approvalModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">审批详情</span>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <div class="confirm-modal" id="confirmModal">
+        <div class="confirm-dialog">
+            <div class="confirm-icon" id="confirmIcon">✓</div>
+            <div class="confirm-title" id="confirmTitle">确认审批</div>
+            <div class="confirm-message" id="confirmMessage">确定要批准此任务吗？</div>
+            <div class="confirm-form" id="confirmForm">
+                <div class="form-group">
+                    <label>审批人</label>
+                    <input type="text" id="confirmApprover" placeholder="请输入审批人名称" value="Reviewer">
+                </div>
+                <div class="form-group">
+                    <label id="commentLabel">审批意见</label>
+                    <textarea id="confirmComment" placeholder="请输入审批意见（可选）"></textarea>
+                </div>
+            </div>
+            <div class="confirm-actions">
+                <button class="btn btn-cancel" id="confirmCancelBtn" onclick="closeConfirm()">取消</button>
+                <button class="btn btn-confirm" id="confirmBtn" onclick="confirmAction()">确认</button>
+            </div>
+            <div class="loading-overlay" id="confirmLoading">
+                <div class="spinner"></div>
+                <span>处理中...</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedPriority = 'P1';
+        let currentTasks = [];
+
+        const PHASE_GATES = {
+            'requirement':    { label: '需求分析', gate_name: 'PM审批',   agent: 'PM Agent' },
+            'architecture':   { label: '架构设计', gate_name: '架构审批', agent: 'Tech Lead Agent' },
+            'ux_design':      { label: '交互设计', gate_name: 'UX审批',   agent: 'UX Designer Agent' },
+            'implementation': { label: '代码实现', gate_name: '代码审批', agent: 'Dev Agent' },
+            'review':         { label: '代码评审', gate_name: '代码评审', agent: 'Code Reviewer Agent' },
+            'testing':        { label: '测试验收', gate_name: '测试审批', agent: 'QA Engineer Agent' },
+            'deployment':     { label: '部署发布', gate_name: '部署审批', agent: 'DevOps Agent' },
+        };
+
+        function selectPriority(el) {
+            document.querySelectorAll('.priority-badge').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+            selectedPriority = el.dataset.value;
+        }
+
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                item.classList.add('active');
+                document.getElementById(item.dataset.page).classList.add('active');
+                
+                if (item.dataset.page === 'dashboard' || item.dataset.page === 'approvals') {
+                    loadTasks();
+                } else if (item.dataset.page === 'traces') {
+                    loadTraces();
+                } else if (item.dataset.page === 'metrics') {
+                    loadMetrics();
+                }
+            });
+        });
+
+        async function loadTasks() {
+            try {
+                console.log('Loading tasks...');
+                const res = await fetch('/tasks');
+                console.log('Response status:', res.status);
+                const tasks = await res.json();
+                console.log('Tasks loaded:', tasks.length);
+                currentTasks = tasks;
+                renderTaskTable(tasks);
+                renderApprovalTable(tasks);
+            } catch (e) {
+                console.error('Failed to load tasks:', e);
+                document.getElementById('taskTableBody').innerHTML = '<tr><td colspan="5" class="empty-state">加载失败: ' + e.message + '</td></tr>';
+            }
+        }
+
+        function renderTaskTable(tasks) {
+            const tbody = document.getElementById('taskTableBody');
+            if (tasks.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty-state">暂无任务</td></tr>';
+                return;
+            }
+            tbody.innerHTML = tasks.map(task => {
+                const phases = task.artifacts?.phases_completed || [];
+                const totalPhases = 6;
+                const progress = Math.round((phases.length / totalPhases) * 100);
+                
+                const stateMap = {
+                    'COMPLETED': { text: '已完成', class: 'completed' },
+                    'PENDING_APPROVAL': { text: '待审核', class: 'pending' },
+                    'APPROVED': { text: '已批准', class: 'approved' },
+                    'REJECTED': { text: '已驳回', class: 'rejected' },
+                    'ANALYZING': { text: '分析中', class: 'analyzing' }
+                };
+                const state = stateMap[task.state] || { text: task.state, class: 'pending' };
+
+                const approvals = task.approvals || [];
+                const approvedCount = approvals.filter(a => a.decision === 'approved').length;
+                const rejectedCount = approvals.filter(a => a.decision === 'rejected').length;
+                
+                const phaseLabels = {
+                    'architecture': '架构',
+                    'ux_design': 'UX设计',
+                    'implementation': '实现',
+                    'review': '评审',
+                    'testing': '测试',
+                    'deployment': '部署'
+                };
+                
+                return `
+                    <tr>
+                        <td>
+                            <div class="title-cell">${task.title}</div>
+                            <div class="desc-cell">${task.description || ''}</div>
+                        </td>
+                        <td><span class="status-badge ${state.class}">${state.text}</span></td>
+                        <td>
+                            <div style="display: flex; flex-direction: column; gap: 6px;">
+                                <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                                    ${Object.entries(phaseLabels).map(([k, v]) => `
+                                        <span style="padding: 2px 8px; font-size: 11px; border-radius: 4px; ${phases.includes(k) ? 'background: rgba(0,255,136,0.15); color: var(--accent-green);' : 'background: var(--bg-tertiary); color: var(--text-muted);'}">
+                                            ${v}
+                                        </span>
+                                    `).join('')}
+                                </div>
+                                <div style="font-size: 11px; color: var(--text-muted);">
+                                    ${approvedCount > 0 ? `<span style="color: var(--accent-green);">✓ ${approvedCount}通过</span>` : ''}
+                                    ${rejectedCount > 0 ? `<span style="color: var(--accent-red); margin-left: 8px;">✕ ${rejectedCount}驳回</span>` : ''}
+                                    ${approvals.length === 0 ? '<span>待审批</span>' : ''}
+                                </div>
+                            </div>
+                        </td>
+                        <td>${task.assignee || '-'}</td>
+                        <td>
+                            <button class="action-btn" onclick="viewTaskDetail('${task.id}')">查看</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderApprovalTable(tasks) {
+            const tbody = document.getElementById('approvalTableBody');
+            const pendingTasks = tasks.filter(t => t.state === 'PENDING_APPROVAL');
+            
+            if (pendingTasks.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="empty-state">暂无待审批任务</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = pendingTasks.map(task => {
+                const phases = task.artifacts?.phases_completed || [];
+                const currentGate = task.artifacts?.current_gate || 'requirement';
+                const gateInfo = PHASE_GATES[currentGate] || {};
+                const gateName = gateInfo.gate_name || '审批';
+                const gateLabel = gateInfo.label || '未知';
+
+                return `
+                    <tr>
+                        <td>
+                            <div class="title-cell">${task.title}</div>
+                            <div style="font-size: 12px; color: var(--text-muted);">${task.id.substring(0, 8)}...</div>
+                        </td>
+                        <td>
+                            <span class="phase-badge current">${gateLabel} - ${gateName}</span>
+                            <span class="phase-badge done">${phases.length} 阶段已完成</span>
+                        </td>
+                        <td><span class="status-badge pending">待审批</span></td>
+                        <td>
+                            <button class="action-btn" onclick="openApproval('${task.id}')">审批</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function viewTaskDetail(taskId) {
+            let task = currentTasks.find(t => t.id === taskId);
+            if (!task) {
+                try {
+                    const res = await fetch(`/tasks/${taskId}`);
+                    task = await res.json();
+                } catch (e) {
+                    console.error('Failed to load task:', e);
+                    return;
+                }
+            }
+
+            const phases = task.artifacts?.phases_completed || [];
+            const approvals = task.approvals || [];
+
+            const phaseTimeline = [
+                { key: 'requirement', label: '需求分析', agent: 'PM Agent' },
+                { key: 'architecture', label: '架构设计', agent: 'TL Agent' },
+                { key: 'ux_design', label: '交互设计', agent: 'UX Designer' },
+                { key: 'implementation', label: '代码实现', agent: 'Dev Agent' },
+                { key: 'review', label: '代码评审', agent: 'Reviewer' },
+                { key: 'testing', label: '测试验收', agent: 'QA Agent' },
+                { key: 'deployment', label: '部署发布', agent: 'DevOps' }
+            ];
+
+            let content = `
+                <div style="margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <h3 style="font-size: 18px; font-weight: 600;">${task.title}</h3>
+                        <span class="status-badge ${task.state === 'COMPLETED' ? 'completed' : 'pending'}" style="font-size: 12px; padding: 4px 10px;">${task.state === 'COMPLETED' ? '已完成' : '待审批'}</span>
+                    </div>
+                    <p style="color: var(--text-secondary); font-size: 13px; line-height: 1.5;">${task.description ? task.description.substring(0, 150) + (task.description.length > 150 ? '...' : '') : ''}</p>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    ${phaseTimeline.map((phase, idx) => {
+                        const isCompleted = (phase.key === 'requirement')
+                            ? !!task.artifacts?.spec
+                            : phases.includes(phase.key);
+                        
+                        let borderColor = 'var(--border-color)';
+                        let bgColor = 'var(--bg-tertiary)';
+                        let statusText = '等待中';
+                        let statusColor = 'var(--text-muted)';
+                        let approver = '-';
+                        let comment = '-';
+                        
+                        const relatedAppr = approvals.find(a => a.stage === phase.key);
+                        
+                        if (relatedAppr) {
+                            borderColor = relatedAppr.decision === 'approved' ? 'var(--accent-green)' : 'var(--accent-red)';
+                            bgColor = relatedAppr.decision === 'approved' ? 'rgba(0,255,136,0.08)' : 'rgba(255,107,107,0.08)';
+                            statusText = relatedAppr.decision === 'approved' ? '✓ 已批准' : '✕ 已驳回';
+                            statusColor = relatedAppr.decision === 'approved' ? 'var(--accent-green)' : 'var(--accent-red)';
+                            approver = relatedAppr.gate_name || relatedAppr.approver || '-';
+                            comment = relatedAppr.comment || '-';
+                        } else if (isCompleted) {
+                            borderColor = 'var(--accent-cyan)';
+                            bgColor = 'rgba(0,212,255,0.08)';
+                            statusText = '✓ 已完成';
+                            statusColor = 'var(--accent-cyan)';
+                        }
+                        
+                        return '<div style="display: flex; align-items: center; gap: 8px; padding: 10px; background: ' + bgColor + '; border-radius: 6px; border-left: 3px solid ' + borderColor + ';">' +
+                            '<div style="font-size: 12px; font-weight: 600; min-width: 65px;">' + phase.label + '</div>' +
+                            '<div style="font-size: 12px; color: ' + statusColor + '; min-width: 60px;">' + statusText + '</div>' +
+                            '<div style="font-size: 11px; color: var(--text-primary); min-width: 60px;">' + approver + '</div>' +
+                            '<div style="font-size: 11px; color: var(--text-muted); flex: 1; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + comment + '</div>' +
+                            '</div>';
+                    }).join('')}
+                </div>
+            `;
+
+            if (task.artifacts?.spec) {
+                content += `
+                    <div class="artifact-section">
+                        <h4>📋 需求规格 (PM)</h4>
+                        <div class="artifact-content">${JSON.stringify(task.artifacts.spec, null, 2)}</div>
+                    </div>
+                `;
+            }
+
+            if (task.artifacts?.gitlab_issue) {
+                const issue = task.artifacts.gitlab_issue;
+                content += `
+                    <div class="artifact-section">
+                        <h4>🔗 GitLab Issue</h4>
+                        <a href="${issue.web_url}" target="_blank" style="color: var(--accent-cyan);">${issue.web_url}</a>
+                    </div>
+                `;
+            }
+
+            if (task.artifacts?.merge_request) {
+                const mr = task.artifacts.merge_request;
+                content += `
+                    <div class="artifact-section">
+                        <h4>🔀 Merge Request</h4>
+                        <a href="${mr.web_url}" target="_blank" style="color: var(--accent-cyan);">${mr.web_url}</a>
+                    </div>
+                `;
+            }
+
+            document.getElementById('modalBody').innerHTML = content;
+            document.getElementById('approvalModal').classList.add('show');
+        }
+
+        async function openApproval(taskId) {
+            const task = currentTasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            await viewTaskDetail(taskId);
+
+            const currentGate = task.artifacts?.current_gate;
+            const gateInfo = currentGate ? PHASE_GATES[currentGate] : null;
+            const gateName = gateInfo ? gateInfo.gate_name : '审批';
+
+            document.getElementById('modalBody').innerHTML += `
+                <div style="margin-top: 16px; padding: 12px; background: rgba(0,212,255,0.08); border-radius: 8px; border: 1px solid rgba(0,212,255,0.2);">
+                    <div style="font-size: 13px; color: var(--accent-cyan); font-weight: 500;">当前审批节点：${gateName}</div>
+                </div>
+                <div class="approval-actions">
+                    <button class="btn btn-success" onclick="approveTask('${taskId}')">✅ 批准</button>
+                    <button class="btn btn-danger" onclick="rejectTask('${taskId}')">❌ 驳回</button>
+                </div>
+            `;
+        }
+
+        let pendingConfirm = null;
+        let isProcessing = false;
+
+        function showConfirm(type, taskId) {
+            if (isProcessing) return;
+            
+            pendingConfirm = { type, taskId };
+            const modal = document.getElementById('confirmModal');
+            const icon = document.getElementById('confirmIcon');
+            const title = document.getElementById('confirmTitle');
+            const message = document.getElementById('confirmMessage');
+            const commentLabel = document.getElementById('commentLabel');
+            const confirmBtn = document.getElementById('confirmBtn');
+            
+            if (type === 'approve') {
+                icon.className = 'confirm-icon approve';
+                icon.textContent = '✓';
+                title.textContent = '批准任务';
+                message.textContent = '确定要批准此任务吗？批准后将进入下一阶段。';
+                commentLabel.textContent = '审批意见（可选）';
+                confirmBtn.className = 'btn btn-confirm';
+                confirmBtn.textContent = '确认批准';
+            } else {
+                icon.className = 'confirm-icon reject';
+                icon.textContent = '✕';
+                title.textContent = '驳回任务';
+                message.textContent = '确定要驳回此任务吗？请填写驳回原因。';
+                commentLabel.textContent = '驳回原因（必填）*';
+                confirmBtn.className = 'btn btn-confirm reject';
+                confirmBtn.textContent = '确认驳回';
+            }
+            
+            document.getElementById('confirmApprover').value = 'Reviewer';
+            document.getElementById('confirmComment').value = '';
+            document.getElementById('confirmComment').style.borderColor = '';
+            document.getElementById('confirmLoading').classList.remove('show');
+            modal.classList.add('show');
+        }
+
+        async function confirmAction() {
+            if (!pendingConfirm || isProcessing) return;
+            
+            const approver = document.getElementById('confirmApprover').value.trim() || 'Reviewer';
+            const comment = document.getElementById('confirmComment').value.trim();
+            const { type, taskId } = pendingConfirm;
+            
+            if (type === 'reject' && !comment) {
+                document.getElementById('confirmComment').focus();
+                document.getElementById('confirmComment').style.borderColor = 'var(--accent-red)';
+                showNotification('请填写驳回原因', 'error');
+                return;
+            }
+            
+            isProcessing = true;
+            document.getElementById('confirmLoading').classList.add('show');
+            
+            try {
+                const res = await fetch(`/tasks/${taskId}/approve`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        approver,
+                        decision: type,
+                        comment: type === 'approve' ? comment : comment
+                    })
+                });
+                const result = await res.json();
+                isProcessing = false;
+                closeConfirm();
+                closeModal();
+                showNotification(result.message, type === 'approve' ? 'success' : 'error');
+                loadTasks();
+            } catch (e) {
+                isProcessing = false;
+                document.getElementById('confirmLoading').classList.remove('show');
+                showNotification('审批失败: ' + e.message, 'error');
+            }
+        }
+
+        function closeConfirm() {
+            if (isProcessing) return;
+            document.getElementById('confirmModal').classList.remove('show');
+            pendingConfirm = null;
+        }
+
+        async function approveTask(taskId) {
+            showConfirm('approve', taskId);
+        }
+
+        async function rejectTask(taskId) {
+            showConfirm('reject', taskId);
+        }
+
+        function closeModal() {
+            document.getElementById('approvalModal').classList.remove('show');
+        }
+
+        function showNotification(message, type = 'success') {
+            const notif = document.createElement('div');
+            notif.className = `notification ${type}`;
+            notif.innerHTML = `
+                <span>${type === 'success' ? '✓' : '✕'}</span>
+                <span>${message}</span>
+            `;
+            document.body.appendChild(notif);
+            setTimeout(() => notif.classList.add('show'), 10);
+            setTimeout(() => {
+                notif.classList.remove('show');
+                setTimeout(() => notif.remove(), 300);
+            }, 3000);
+        }
+
+        async function loadTraces() {
+            try {
+                const res = await fetch('/tasks');
+                const tasks = await res.json();
+                const container = document.getElementById('traceList');
+                
+                if (tasks.length === 0) {
+                    container.innerHTML = '<div class="empty-state">暂无任务</div>';
+                    return;
+                }
+                
+                let html = '<div style="display: flex; flex-direction: column; gap: 12px;">';
+                
+                for (const task of tasks) {
+                    const traceRes = await fetch(`/observability/trace/${task.id}`);
+                    const traceData = await traceRes.json();
+                    const trace = traceData.trace || [];
+                    const totalDuration = trace.reduce((sum, item) => sum + (item.duration_ms || 0), 0);
+                    const hasError = trace.some(item => item.error);
+                    
+                    const phaseLabels = {
+                        'pm': '需求分析',
+                        'tl': '架构设计',
+                        'ux': '交互设计',
+                        'dev': '代码实现',
+                        'reviewer': '代码评审',
+                        'qa': '测试',
+                        'devops': '部署'
+                    };
+                    
+                    html += `
+                        <div style="padding: 16px; background: var(--bg-tertiary); border-radius: 12px; cursor: pointer; transition: all 0.2s;" onclick="showTraceModal('${task.id}', '${task.title.replace(/'/g, "\\'")}')">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <div>
+                                    <div style="font-weight: 500; margin-bottom: 4px;">${task.title}</div>
+                                    <div style="font-size: 12px; color: var(--text-muted);">${task.id.substring(0, 8)}...</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 14px; color: ${hasError ? 'var(--accent-red)' : 'var(--accent-cyan)'};">
+                                        ${hasError ? '⚠️ 有错误' : '✓ 正常'}
+                                    </div>
+                                    <div style="font-size: 12px; color: var(--text-muted);">${totalDuration}ms</div>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                ${trace.map(item => `
+                                    <span style="padding: 4px 10px; background: ${item.error ? 'rgba(255,107,107,0.2)' : 'rgba(0,255,136,0.15)'}; border-radius: 4px; font-size: 12px; color: ${item.error ? 'var(--accent-red)' : 'var(--accent-green)'};">
+                                        ${phaseLabels[item.phase] || item.phase || 'Unknown'}
+                                    </span>
+                                `).join('')}
+                                ${trace.length === 0 ? '<span style="font-size: 12px; color: var(--text-muted);">暂无链路</span>' : ''}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                html += '</div>';
+                container.innerHTML = html;
+            } catch (e) {
+                console.error('Failed to load traces:', e);
+            }
+        }
+
+        async function showTraceModal(taskId, taskTitle) {
+            try {
+                const res = await fetch(`/observability/trace/${taskId}`);
+                const data = await res.json();
+                const trace = data.trace || [];
+                
+                const phaseLabels = {
+                    'pm': '需求分析',
+                    'tl': '架构设计',
+                    'ux': '交互设计',
+                    'dev': '代码实现',
+                    'reviewer': '代码评审',
+                    'qa': '测试',
+                    'devops': '部署'
+                };
+                
+                let traceHtml = '';
+                if (trace.length === 0) {
+                    traceHtml = '<div class="empty-state">暂无链路数据</div>';
+                } else {
+                    traceHtml = `
+                        <div class="trace-timeline">
+                            ${trace.map(item => `
+                                <div class="trace-item ${item.error ? 'error' : 'success'}">
+                                    <div class="trace-header">
+                                        <span class="trace-agent">${item.agent || 'Unknown Agent'}</span>
+                                        <span class="trace-duration">${item.duration_ms || 0}ms</span>
+                                    </div>
+                                    <div class="trace-phase">${phaseLabels[item.phase] || item.phase || 'Unknown'}</div>
+                                    ${item.error ? `<div style="color: var(--accent-red); font-size: 12px; margin-top: 8px;">❌ ${item.error}</div>` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+                
+                document.getElementById('modalBody').innerHTML = `
+                    <div style="margin-bottom: 16px;">
+                        <h3 style="margin-bottom: 8px;">${taskTitle}</h3>
+                        <div style="font-size: 12px; color: var(--text-muted);">${taskId}</div>
+                    </div>
+                    ${traceHtml}
+                `;
+                document.getElementById('approvalModal').classList.add('show');
+            } catch (e) {
+                showNotification('加载失败: ' + e.message, 'error');
+            }
+        }
+
+        async function loadMetrics() {
+            try {
+                const res = await fetch('/evaluation');
+                const data = await res.json();
+
+                const tasksRes = await fetch('/tasks');
+                const tasks = await tasksRes.json();
+
+                document.getElementById('totalTasks').textContent = data.total_tasks || 0;
+                document.getElementById('avgScore').textContent = data.average_score || '-';
+                document.getElementById('completedTasks').textContent = tasks.filter(t => t.state === 'COMPLETED').length;
+                document.getElementById('pendingTasks').textContent = tasks.filter(t => t.state === 'PENDING_APPROVAL').length;
+
+                const dist = data.grade_distribution || {};
+                document.getElementById('gradeA').textContent = dist.A || 0;
+                document.getElementById('gradeB').textContent = dist.B || 0;
+                document.getElementById('gradeC').textContent = dist.C || 0;
+                document.getElementById('gradeD').textContent = dist.D || 0;
+                document.getElementById('gradeF').textContent = dist.F || 0;
+            } catch (e) {
+                console.error('Failed to load metrics:', e);
+            }
+        }
+
+        document.getElementById('requirementForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span>提交中...';
+
+            const data = {
+                title: document.getElementById('title').value,
+                description: document.getElementById('description').value,
+                priority: selectedPriority
+            };
+
+            try {
+                const res = await fetch('/requirements', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await res.json();
+                showNotification('需求提交成功! 任务ID: ' + result.task_id, 'success');
+                document.getElementById('requirementForm').reset();
+                loadTasks();
+            } catch (err) {
+                showNotification('提交失败: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '提交需求';
+            }
+        });
+
+        loadTasks();
+    </script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+from pydantic import BaseModel, Field
+from typing import Optional, List
+from datetime import datetime
+from enum import Enum
+from uuid import uuid4
+
+
+class TaskState(str, Enum):
+    CREATED = "CREATED"
+    ANALYZING = "ANALYZING"
+    PENDING_APPROVAL = "PENDING_APPROVAL"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+
+
+def generate_id() -> str:
+    return str(uuid4())
+
+
+class Requirement(BaseModel):
+    id: str = Field(default_factory=generate_id)
+    title: str
+    description: str
+    priority: str = "P2"
+    created_at: datetime = Field(default_factory=datetime.now)
+
+
+class Task(BaseModel):
+    id: str = Field(default_factory=generate_id)
+    requirement_id: str
+    title: str
+    description: str
+    state: TaskState = TaskState.CREATED
+    assignee: Optional[str] = None
+    artifacts: dict = Field(default_factory=dict)
+    approvals: List[dict] = Field(default_factory=list)
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
+
+
+class ApprovalRequest(BaseModel):
+    approver: str
+    decision: str  # "approve" or "reject"
+    comment: Optional[str] = None
+
+
+class WorkflowResponse(BaseModel):
+    task_id: str
+    state: str
+    message: str
+    artifacts: Optional[dict] = None
