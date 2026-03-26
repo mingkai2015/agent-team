@@ -93,11 +93,11 @@ class DevAgent:
 """
         try:
             response = self.llm.chat(DEV_AGENT_SYSTEM_PROMPT, prompt)
-            tasks = self._parse_json_response(response)
+            tasks = self._parse_json_response(response, list_mode=True)
             if tasks and isinstance(tasks, list):
                 return tasks
-        except:
-            pass
+        except Exception as e:
+            print(f"Dev Agent tasks generation failed: {e}")
 
         return self._fallback_tasks(spec)
 
@@ -117,22 +117,27 @@ class DevAgent:
 """
         try:
             response = self.llm.chat(DEV_AGENT_SYSTEM_PROMPT, prompt)
-            code = self._parse_json_response(response)
+            code = self._parse_json_response(response, list_mode=True)
             if code and isinstance(code, list):
                 return code
-        except:
-            pass
+        except Exception as e:
+            print(f"Dev Agent code generation failed: {e}")
 
         return self._fallback_code(spec)
 
-    def _parse_json_response(self, response: str) -> Any:
+    def _parse_json_response(self, response: str, list_mode: bool = False) -> Any:
         import re
+        from app.schemas import parse_llm_json, DevPlan
 
-        json_match = re.search(r"\{[\s\S]*\}|\[[\s\S]*\]", response)
+        if not list_mode:
+            parsed = parse_llm_json(response, DevPlan)
+            return parsed.model_dump() if parsed else None
+
+        json_match = re.search(r"\[[\s\S]*\]", response)
         if json_match:
             try:
                 return json.loads(json_match.group())
-            except:
+            except Exception:
                 pass
         return None
 

@@ -337,11 +337,20 @@ def _execute_next_phase(task: Task, approver: str, trace_id: str) -> WorkflowRes
     except Exception as e:
         print(f"{agent_name} error: {e}")
 
-        fallback_method = getattr(agent, f"_fallback_{next_phase}", None)
+        fallback_map = {
+            "architecture": "_fallback_design",
+            "ux_design": "_fallback_design",
+            "implementation": "_fallback_impl",
+            "review": "_fallback_review",
+            "testing": "_fallback_test",
+            "deployment": "_fallback_deploy",
+        }
+        fallback_name = fallback_map.get(next_phase, f"_fallback_{next_phase}")
+        fallback_method = getattr(agent, fallback_name, None)
         if fallback_method:
             result = fallback_method(spec)
         else:
-            result = {}
+            result = {"error": str(e), "status": "fallback_unavailable"}
 
         duration = int((time.time() - start_time) * 1000)
         observability.record_agent_call(
@@ -417,7 +426,7 @@ def get_task_test_report(task_id: str):
     task = db.get_task(task_id)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
-    return task.artifacts.get("test_report", {})
+    return task.artifacts.get("testing", {})
 
 
 @app.get("/tasks/{task_id}/deployment")

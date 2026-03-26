@@ -1,8 +1,20 @@
 import os
+import logging
 import urllib.parse
 import subprocess
-import base64
 from typing import Dict, Any, Optional, List
+
+logger = logging.getLogger(__name__)
+
+
+class GitLabAPIError(Exception):
+    """Raised when a GitLab API call returns a non-2xx status."""
+
+    def __init__(self, status_code: int, body: str, url: str):
+        self.status_code = status_code
+        self.body = body
+        self.url = url
+        super().__init__(f"GitLab API {status_code} at {url}: {body[:200]}")
 
 
 class GitLabClient:
@@ -17,6 +29,11 @@ class GitLabClient:
         self.project_id = os.getenv("GITLAB_PROJECT_ID", "")
         self.gitlab_repo_url = os.getenv("GITLAB_REPO_URL", "")
 
+    def _check_response(self, response, url: str) -> Dict[str, Any]:
+        if response.status_code >= 400:
+            raise GitLabAPIError(response.status_code, response.text, url)
+        return response.json()
+
     def _get_project_path(self) -> str:
         """URL encode project path"""
         return urllib.parse.quote(self.project_id, safe="")
@@ -24,7 +41,6 @@ class GitLabClient:
     def create_issue(
         self, title: str, description: str, labels: list = None
     ) -> Dict[str, Any]:
-        """创建 GitLab Issue (Mock)"""
         if self.mode == "mock":
             return {
                 "id": f"mock-issue-{hash(title) % 10000}",
@@ -39,24 +55,25 @@ class GitLabClient:
 
         import httpx
 
+        url = f"{self.base_url}/api/v4/projects/{self._get_project_path()}/issues"
         headers = {"PRIVATE-TOKEN": self.token}
         data = {
             "title": title,
             "description": description,
             "labels": ",".join(labels) if labels else "",
         }
-        response = httpx.post(
-            f"{self.base_url}/api/v4/projects/{self._get_project_path()}/issues",
-            headers=headers,
-            json=data,
-            timeout=30.0,
-        )
-        return response.json()
+        try:
+            response = httpx.post(url, headers=headers, json=data, timeout=30.0)
+            return self._check_response(response, url)
+        except GitLabAPIError:
+            raise
+        except Exception as e:
+            logger.error("GitLab create_issue failed: %s", e)
+            return {"error": str(e), "title": title}
 
     def create_mr(
         self, source_branch: str, target_branch: str, title: str, description: str
     ) -> Dict[str, Any]:
-        """创建 Merge Request (Mock)"""
         if self.mode == "mock":
             return {
                 "id": f"mock-mr-{hash(source_branch) % 10000}",
@@ -72,6 +89,7 @@ class GitLabClient:
 
         import httpx
 
+        url = f"{self.base_url}/api/v4/projects/{self._get_project_path()}/merge_requests"
         headers = {"PRIVATE-TOKEN": self.token}
         data = {
             "source_branch": source_branch,
@@ -79,18 +97,18 @@ class GitLabClient:
             "title": title,
             "description": description,
         }
-        response = httpx.post(
-            f"{self.base_url}/api/v4/projects/{self._get_project_path()}/merge_requests",
-            headers=headers,
-            json=data,
-            timeout=30.0,
-        )
-        return response.json()
+        try:
+            response = httpx.post(url, headers=headers, json=data, timeout=30.0)
+            return self._check_response(response, url)
+        except GitLabAPIError:
+            raise
+        except Exception as e:
+            logger.error("GitLab create_mr failed: %s", e)
+            return {"error": str(e), "source_branch": source_branch}
 
     def update_issue(
         self, issue_iid: str, state: str = None, labels: list = None
     ) -> Dict[str, Any]:
-        """更新 Issue (Mock)"""
         if self.mode == "mock":
             return {
                 "iid": issue_iid,
@@ -100,6 +118,7 @@ class GitLabClient:
 
         import httpx
 
+        url = f"{self.base_url}/api/v4/projects/{self._get_project_path()}/issues/{issue_iid}"
         headers = {"PRIVATE-TOKEN": self.token}
         data = {}
         if state:
@@ -107,16 +126,16 @@ class GitLabClient:
         if labels:
             data["labels"] = ",".join(labels)
 
-        response = httpx.put(
-            f"{self.base_url}/api/v4/projects/{self._get_project_path()}/issues/{issue_iid}",
-            headers=headers,
-            json=data,
-            timeout=30.0,
-        )
-        return response.json()
+        try:
+            response = httpx.put(url, headers=headers, json=data, timeout=30.0)
+            return self._check_response(response, url)
+        except GitLabAPIError:
+            raise
+        except Exception as e:
+            logger.error("GitLab update_issue failed: %s", e)
+            return {"error": str(e), "iid": issue_iid}
 
     def create_branch(self, branch_name: str, ref: str = "main") -> Dict[str, Any]:
-        """创建分支 (Mock)"""
         if self.mode == "mock":
             return {
                 "name": branch_name,
@@ -126,15 +145,17 @@ class GitLabClient:
 
         import httpx
 
+        url = f"{self.base_url}/api/v4/projects/{self._get_project_path()}/repository/branches"
         headers = {"PRIVATE-TOKEN": self.token}
         data = {"branch": branch_name, "ref": ref}
-        response = httpx.post(
-            f"{self.base_url}/api/v4/projects/{self._get_project_path()}/repository/branches",
-            headers=headers,
-            json=data,
-            timeout=30.0,
-        )
-        return response.json()
+        try:
+            response = httpx.post(url, headers=headers, json=data, timeout=30.0)
+            return self._check_response(response, url)
+        except GitLabAPIError:
+            raise
+        except Exception as e:
+            logger.error("GitLab create_branch failed: %s", e)
+            return {"error": str(e), "branch": branch_name}
 
     def push_code(
         self, code: List[Dict[str, Any]], project_name: str, branch: str = "main"

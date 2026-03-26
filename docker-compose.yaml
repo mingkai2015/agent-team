@@ -18,8 +18,11 @@ services:
   redis:
     image: redis:7-alpine
     container_name: agent-team-redis
+    command: redis-server --appendonly yes
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
     networks:
       - agent-network
 
@@ -41,6 +44,7 @@ services:
 
 volumes:
   postgres_data:
+  redis_data:
 
 networks:
   agent-network:

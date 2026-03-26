@@ -57,15 +57,10 @@ class QAAgent:
         return self._fallback_test(spec)
 
     def _parse_json_response(self, response: str) -> Any:
-        import re
+        from app.schemas import parse_llm_json, QATestReport
 
-        json_match = re.search(r"\{[\s\S]*\}", response)
-        if json_match:
-            try:
-                return json.loads(json_match.group())
-            except:
-                pass
-        return None
+        parsed = parse_llm_json(response, QATestReport)
+        return parsed.model_dump() if parsed else None
 
     def _fallback_test(self, spec: Dict[str, Any]) -> Dict[str, Any]:
         return {

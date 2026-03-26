@@ -58,17 +58,12 @@ class ReviewerAgent:
         return self._fallback_review(code)
 
     def _parse_json_response(self, response: str) -> Any:
-        import re
+        from app.schemas import parse_llm_json, ReviewReport
 
-        json_match = re.search(r"\{[\s\S]*\}", response)
-        if json_match:
-            try:
-                return json.loads(json_match.group())
-            except:
-                pass
-        return None
+        parsed = parse_llm_json(response, ReviewReport)
+        return parsed.model_dump() if parsed else None
 
-    def _fallback_review(self, code: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _fallback_review(self, code: List[Dict[str, Any]] = None) -> Dict[str, Any]:
         return {
             "overall_score": 80,
             "issues": [

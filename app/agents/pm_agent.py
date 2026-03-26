@@ -54,24 +54,20 @@ class PMAgent:
         return spec
 
     def _parse_llm_response(self, response: str, requirement: Dict) -> Dict:
-        import re
+        from app.schemas import parse_llm_json, PMSpec
 
-        json_match = re.search(r"\{[\s\S]*\}", response)
-        if json_match:
-            try:
-                data = json.loads(json_match.group())
-                return {
-                    "requirement_id": requirement.get("id", ""),
-                    "title": requirement.get("title", ""),
-                    "description": requirement.get("description", ""),
-                    "detailed_description": data.get("detailed_description", ""),
-                    "user_stories": data.get("user_stories", []),
-                    "acceptance_criteria": data.get("acceptance_criteria", []),
-                    "estimation": data.get("estimation", "M"),
-                    "priority": requirement.get("priority", "P2"),
-                }
-            except:
-                pass
+        parsed = parse_llm_json(response, PMSpec)
+        if parsed:
+            return {
+                "requirement_id": requirement.get("id", ""),
+                "title": requirement.get("title", ""),
+                "description": requirement.get("description", ""),
+                "detailed_description": parsed.detailed_description,
+                "user_stories": parsed.user_stories,
+                "acceptance_criteria": parsed.acceptance_criteria,
+                "estimation": parsed.estimation,
+                "priority": requirement.get("priority", "P2"),
+            }
         return self._generate_fallback_spec(requirement)
 
     def _generate_fallback_spec(self, requirement: Dict) -> Dict:

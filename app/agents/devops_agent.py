@@ -234,7 +234,7 @@ CMD ["nginx", "-g", "daemon off;"]
         return None
 
     def _fallback_deploy(
-        self, spec: Dict[str, Any], code: List[Dict[str, Any]]
+        self, spec: Dict[str, Any], code: List[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         return {
             "dockerfile_backend": """FROM maven:3.9-eclipse-temurin-17 AS build

@@ -38,9 +38,13 @@ class EvaluationMetrics:
             review_score = self._evaluate_review(artifacts["review"])
             evaluation["scores"]["review_quality"] = review_score
 
-        if "test_report" in artifacts:
-            test_score = self._evaluate_test(artifacts["test_report"])
+        if "testing" in artifacts:
+            test_score = self._evaluate_test(artifacts["testing"])
             evaluation["scores"]["test_quality"] = test_score
+
+        if "ux_design" in artifacts:
+            ux_score = self._evaluate_ux_design(artifacts["ux_design"])
+            evaluation["scores"]["ux_quality"] = ux_score
 
         if "deployment" in artifacts:
             deploy_score = self._evaluate_deployment(artifacts["deployment"])
@@ -127,9 +131,21 @@ class EvaluationMetrics:
                 score = min(100, (passed / total) * 50 + 50)
         return min(100, score)
 
+    def _evaluate_ux_design(self, ux: Dict) -> float:
+        score = 70
+        if ux.get("information_architecture"):
+            score += 5
+        if ux.get("user_flows"):
+            score += min(10, len(ux["user_flows"]) * 5)
+        if ux.get("wireframes"):
+            score += min(10, len(ux["wireframes"]) * 3)
+        if ux.get("design_system"):
+            score += 5
+        return min(100, score)
+
     def _evaluate_deployment(self, deploy: Dict) -> float:
         score = 70
-        if deploy.get("dockerfile"):
+        if deploy.get("dockerfile") or deploy.get("dockerfile_backend"):
             score += 10
         if deploy.get("docker_compose"):
             score += 10
