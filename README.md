@@ -1,6 +1,6 @@
 # Agent Team — AI Multi-Agent IT Delivery System
 
-> 由 7 个专属 AI 智能体协作完成软件交付全流程，每个阶段设置人工审核门禁。
+> Seven specialized AI agents collaborate to deliver software end-to-end, with a human review gate at every phase.
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue?logo=python)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.109-green?logo=fastapi)](https://fastapi.tiangolo.com)
@@ -10,130 +10,128 @@
 
 ---
 
-## 概览
+## Overview
 
-**Agent Team** 是一套 AI 驱动的软件交付系统，将从需求分析到生产部署的完整 SDLC 流程分配给 7 个专属 AI 智能体：
+**Agent Team** is an AI-powered software delivery system that maps the complete SDLC — from requirements to production — across seven specialized agents. Each phase pauses for human approval before the next agent picks up the work. Rejections automatically route back to the responsible agent for rework.
 
-| 智能体 | 职责 |
+| Agent | Responsibility |
 |---|---|
-| **PM Agent** | 需求分析、用户故事拆解、验收标准制定 |
-| **Tech Lead Agent** | 系统架构设计、技术选型、API 设计 |
-| **UX Designer Agent** | 交互设计、原型方案、组件规划 |
-| **Dev Agent** | 代码实现、单元测试、自检验证 |
-| **Code Reviewer Agent** | 代码质量审查、安全扫描、改进建议 |
-| **QA Engineer Agent** | 测试用例设计、功能验收、缺陷报告 |
-| **DevOps Agent** | 容器化配置、CI/CD、生产环境部署方案 |
-
-每个阶段完成后都会暂停，等待人工审核（通过 / 驳回）。驳回时自动回退到对应智能体重新执行。
+| **PM Agent** | Requirements analysis, user story decomposition, acceptance criteria |
+| **Tech Lead Agent** | System architecture, technology selection, API design |
+| **UX Designer Agent** | Interaction design, prototypes, component planning |
+| **Dev Agent** | Code implementation, unit tests, self-validation |
+| **Code Reviewer Agent** | Code quality, security scanning, improvement suggestions |
+| **QA Engineer Agent** | Test case design, functional acceptance, defect reporting |
+| **DevOps Agent** | Containerization, CI/CD pipeline, production deployment |
 
 ---
 
-## 工作流
+## Workflow
 
 ```mermaid
 graph TD
-    A([开始]) --> PM[PM Agent\n需求分析]
-    PM --> HR1{人工审核}
-    HR1 -->|通过| DD[并行设计]
-    HR1 -->|驳回| PM
+    A([Start]) --> PM[PM Agent\nRequirements]
+    PM --> HR1{Human Review}
+    HR1 -->|Approved| DD[Parallel Design]
+    HR1 -->|Rejected| PM
 
-    subgraph DD[并行设计阶段]
-        TL[TL Agent\n架构设计]
-        UX[UX Agent\n交互设计]
+    subgraph DD[Parallel Design Phase]
+        TL[TL Agent\nArchitecture]
+        UX[UX Agent\nUX Design]
     end
 
-    DD --> HR2{人工审核}
-    HR2 -->|通过| DEV[Dev Agent\n代码实现]
-    HR2 -->|驳回| DD
+    DD --> HR2{Human Review}
+    HR2 -->|Approved| DEV[Dev Agent\nImplementation]
+    HR2 -->|Rejected| DD
 
-    DEV --> REV[Reviewer Agent\n代码评审]
-    REV -->|未通过 且 重试<3次| DEV
-    REV -->|通过或超过重试| HR3{人工审核}
-    HR3 -->|通过| QA[QA Agent\n测试验收]
-    HR3 -->|驳回| DEV
+    DEV --> REV[Reviewer Agent\nCode Review]
+    REV -->|Fail & retries < 3| DEV
+    REV -->|Pass or max retries| HR3{Human Review}
+    HR3 -->|Approved| QA[QA Agent\nTesting]
+    HR3 -->|Rejected| DEV
 
-    QA --> HR4{人工审核}
-    HR4 -->|通过| OPS[DevOps Agent\n部署配置]
-    HR4 -->|驳回| DEV
+    QA --> HR4{Human Review}
+    HR4 -->|Approved| OPS[DevOps Agent\nDeployment]
+    HR4 -->|Rejected| DEV
 
-    OPS --> HR5{人工审核}
-    HR5 -->|通过| DONE([交付完成])
-    HR5 -->|驳回| OPS
+    OPS --> HR5{Human Review}
+    HR5 -->|Approved| DONE([Delivered])
+    HR5 -->|Rejected| OPS
 ```
 
-支持三种工作流模板：
+Three workflow templates are available:
 
-| 模板 | 说明 |
+| Template | Description |
 |---|---|
-| `full` | 全量流程，TL+UX 并行设计，Reviewer 自动重试（最多 3 次） |
-| `fast` | 跳过 UX 和 QA，快速交付 |
-| `review_only` | 仅 PM + Dev + Reviewer |
+| `full` | All 7 agents, TL + UX run in parallel, Reviewer auto-reworks up to 3 times |
+| `fast` | Skips UX and QA for rapid delivery |
+| `review_only` | PM → Dev → Reviewer only |
 
 ---
 
-## 技术栈
+## Tech Stack
 
-**后端**
-- [FastAPI](https://fastapi.tiangolo.com) — REST API 框架
-- [LangGraph](https://langchain-ai.github.io/langgraph/) — 智能体工作流状态机
-- [Anthropic Claude](https://anthropic.com) — 底层 LLM（支持代理配置）
-- PostgreSQL — 任务持久化
-- Redis — LangGraph checkpoint 存储
+**Backend**
+- [FastAPI](https://fastapi.tiangolo.com) — REST API framework
+- [LangGraph](https://langchain-ai.github.io/langgraph/) — stateful agent workflow graph
+- [Anthropic Claude](https://anthropic.com) — underlying LLM (proxy-compatible)
+- PostgreSQL — task persistence
+- Redis — LangGraph checkpoint store
 
-**前端**
+**Frontend**
 - React 18 + TypeScript + Vite
-- React Router — 多页面路由
-- Mermaid — 工作流可视化
+- React Router — multi-page navigation
+- Mermaid — workflow visualization
 
-**DevOps**
-- Docker + Docker Compose 一键启动
-- GitLab 集成 — 自动创建 Issue / MR / 推送代码
+**Infrastructure**
+- Docker + Docker Compose — one-command startup
+- GitLab integration — auto-creates Issues, MRs, and pushes generated code
 
 ---
 
-## 快速开始
+## Getting Started
 
-### 前置条件
+### Prerequisites
 
 - Docker & Docker Compose
-- Anthropic API Key（或兼容代理）
+- An Anthropic API key (or a compatible proxy)
 
-### 1. 克隆并配置
+### 1. Clone and configure
 
 ```bash
 git clone https://github.com/mingkai2015/agent-team.git
 cd agent-team
 
 cp .env.example .env
-# 编辑 .env，填入你的 API Key 和配置
+# Edit .env and fill in your API key and settings
 ```
 
-### 2. 启动服务
+### 2. Start all services
 
 ```bash
 docker compose up -d
 ```
 
-服务启动后访问：
-- **前端**：http://localhost:8000
-- **API 文档**：http://localhost:8000/docs
+Once running:
+- **Web UI** → http://localhost:8000
+- **API docs** → http://localhost:8000/docs
 
-### 3. 本地开发（不使用 Docker）
+### 3. Local development (without Docker)
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 
-# 需要本地运行 PostgreSQL 和 Redis
+# Requires PostgreSQL and Redis running locally
 uvicorn app.main:app --reload
 ```
 
 ---
 
-## 配置说明
+## Configuration
 
-`.env` 中的关键配置项（参考 `.env.example`）：
+All settings are loaded from `.env` (see `.env.example` for the full template):
 
 ```ini
 # Anthropic LLM
@@ -141,8 +139,9 @@ ANTHROPIC_BASE_URL=https://api.anthropic.com
 ANTHROPIC_AUTH_TOKEN=sk-ant-...
 ANTHROPIC_MODEL=claude-sonnet-4-5-20250929
 
-# GitLab 集成（设置为 mock 可在不连接 GitLab 的情况下运行）
-GITLAB_MODE=mock   # mock | real
+# GitLab integration
+# Set GITLAB_MODE=mock to run without a real GitLab instance
+GITLAB_MODE=mock        # mock | real
 GITLAB_URL=https://gitlab.com
 GITLAB_TOKEN=glpat-...
 GITLAB_PROJECT_ID=your-namespace/your-project
@@ -150,35 +149,35 @@ GITLAB_PROJECT_ID=your-namespace/your-project
 
 ---
 
-## API 参考
+## API Reference
 
-| 方法 | 路径 | 说明 |
+| Method | Path | Description |
 |---|---|---|
-| `POST` | `/requirements` | 提交新需求，触发 PM Agent 分析 |
-| `GET` | `/tasks` | 获取所有任务列表 |
-| `GET` | `/tasks/{id}` | 获取单个任务详情 |
-| `POST` | `/tasks/{id}/approve` | 提交审核决定（approve / reject） |
-| `GET` | `/tasks/{id}/spec` | 获取需求规格 |
-| `GET` | `/tasks/{id}/architecture` | 获取架构设计 |
-| `GET` | `/tasks/{id}/implementation` | 获取实现代码 |
-| `GET` | `/tasks/{id}/review` | 获取代码评审报告 |
-| `GET` | `/tasks/{id}/test-report` | 获取测试报告 |
-| `GET` | `/tasks/{id}/deployment` | 获取部署配置 |
-| `GET` | `/observability/metrics` | 获取可观测性指标 |
-| `GET` | `/evaluation` | 获取任务评分汇总 |
-| `GET` | `/skills` | 获取所有智能体技能清单 |
+| `POST` | `/requirements` | Submit a requirement; triggers PM Agent analysis |
+| `GET` | `/tasks` | List all tasks |
+| `GET` | `/tasks/{id}` | Get task details |
+| `POST` | `/tasks/{id}/approve` | Submit a review decision (`approve` / `reject`) |
+| `GET` | `/tasks/{id}/spec` | Get the requirements spec |
+| `GET` | `/tasks/{id}/architecture` | Get the architecture design |
+| `GET` | `/tasks/{id}/implementation` | Get generated code |
+| `GET` | `/tasks/{id}/review` | Get the code review report |
+| `GET` | `/tasks/{id}/test-report` | Get the QA test report |
+| `GET` | `/tasks/{id}/deployment` | Get the deployment configuration |
+| `GET` | `/observability/metrics` | Observability metrics |
+| `GET` | `/evaluation` | Task score summary |
+| `GET` | `/skills` | Agent skill registry |
 
-完整交互式文档：`http://localhost:8000/docs`
+Full interactive docs available at `http://localhost:8000/docs`.
 
 ---
 
-## 项目结构
+## Project Structure
 
 ```
 agent-team/
 ├── app/
-│   ├── agents/          # 7 个专属智能体实现
-│   │   ├── llm_client.py    # 共享 LLM 客户端（含重试机制）
+│   ├── agents/              # Seven specialized agent implementations
+│   │   ├── llm_client.py    # Shared LLM client with retry & backoff
 │   │   ├── pm_agent.py
 │   │   ├── tl_agent.py
 │   │   ├── ux_agent.py
@@ -186,23 +185,23 @@ agent-team/
 │   │   ├── reviewer_agent.py
 │   │   ├── qa_agent.py
 │   │   └── devops_agent.py
-│   ├── workflow/        # LangGraph 状态机
-│   │   ├── graph.py         # 图结构定义与模板
-│   │   ├── nodes.py         # 各阶段节点函数
+│   ├── workflow/            # LangGraph state machine
+│   │   ├── graph.py         # Graph definition and workflow templates
+│   │   ├── nodes.py         # Per-phase node functions
 │   │   └── state.py         # WorkflowState TypedDict
-│   ├── main.py          # FastAPI 路由
-│   ├── models.py        # 数据模型
-│   ├── database.py      # PostgreSQL 持久化
-│   ├── observability.py # 追踪与指标
-│   ├── evaluation.py    # 任务评分
-│   └── auth.py          # API Key 认证中间件
-├── frontend/            # React + TypeScript + Vite
+│   ├── main.py              # FastAPI routes
+│   ├── models.py            # Data models
+│   ├── database.py          # PostgreSQL persistence
+│   ├── observability.py     # Tracing and metrics
+│   ├── evaluation.py        # Task scoring
+│   └── auth.py              # API key authentication middleware
+├── frontend/                # React + TypeScript + Vite
 │   └── src/pages/
 │       ├── Dashboard.tsx
 │       ├── WorkflowGraph.tsx
 │       ├── ProjectDetail.tsx
 │       └── TaskDetail.tsx
-├── tests/               # pytest 测试套件
+├── tests/                   # pytest test suite
 ├── docker-compose.yaml
 ├── Dockerfile
 └── .env.example
