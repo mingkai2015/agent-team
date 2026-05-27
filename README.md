@@ -29,43 +29,27 @@
 ## Workflow
 
 ```mermaid
-graph TD
-    A([Start]) --> PM[PM Agent\nRequirements]
-    PM --> HR1{Human Review}
-    HR1 -->|Approved| DD[Parallel Design]
-    HR1 -->|Rejected| PM
-
-    subgraph DD[Parallel Design Phase]
-        TL[TL Agent\nArchitecture]
-        UX[UX Agent\nUX Design]
-    end
-
-    DD --> HR2{Human Review}
-    HR2 -->|Approved| DEV[Dev Agent\nImplementation]
-    HR2 -->|Rejected| DD
-
-    DEV --> REV[Reviewer Agent\nCode Review]
-    REV -->|Fail & retries < 3| DEV
-    REV -->|Pass or max retries| HR3{Human Review}
-    HR3 -->|Approved| QA[QA Agent\nTesting]
-    HR3 -->|Rejected| DEV
-
-    QA --> HR4{Human Review}
-    HR4 -->|Approved| OPS[DevOps Agent\nDeployment]
-    HR4 -->|Rejected| DEV
-
-    OPS --> HR5{Human Review}
-    HR5 -->|Approved| DONE([Delivered])
-    HR5 -->|Rejected| OPS
+graph LR
+    PM[PM] --> G1{Review}
+    G1 -->|✓| TL[TL] & UX[UX]
+    G1 -->|✗| PM
+    TL & UX --> G2{Review}
+    G2 -->|✓| DEV[Dev]
+    G2 -->|✗| TL
+    DEV --> REV[Reviewer]
+    REV -->|fail < 3x| DEV
+    REV -->|pass| G3{Review}
+    G3 -->|✓| QA[QA]
+    G3 -->|✗| DEV
+    QA --> G4{Review}
+    G4 -->|✓| OPS[DevOps]
+    G4 -->|✗| DEV
+    OPS --> G5{Review}
+    G5 -->|✓| DONE([Done])
+    G5 -->|✗| OPS
 ```
 
-Three workflow templates are available:
-
-| Template | Description |
-|---|---|
-| `full` | All 7 agents, TL + UX run in parallel, Reviewer auto-reworks up to 3 times |
-| `fast` | Skips UX and QA for rapid delivery |
-| `review_only` | PM → Dev → Reviewer only |
+Templates: `full` (all 7 agents, TL+UX parallel, auto-rework) · `fast` (skip UX & QA) · `review_only` (PM → Dev → Reviewer)
 
 ---
 
