@@ -1,19 +1,22 @@
 import os
 import json
+import logging
 from typing import Dict, Any, List
 from app.agents.llm_client import llm_client
 
+logger = logging.getLogger(__name__)
+
 
 REVIEWER_AGENT_SYSTEM_PROMPT = """
-你是一个资深代码评审专家，负责代码质量审查和安全检查。
+You are a senior code reviewer responsible for code quality and security review.
 
-你的职责：
-1. 检查代码规范和最佳实践
-2. 识别潜在的安全风险
-3. 评估代码可维护性
-4. 提供改进建议
+Responsibilities:
+1. Check coding standards and best practices
+2. Identify potential security risks
+3. Assess maintainability
+4. Provide actionable improvements
 
-输出必须为有效的 JSON 格式。
+Output MUST be valid JSON.
 """
 
 
@@ -31,19 +34,19 @@ class ReviewerAgent:
         )
 
         user_prompt = f"""
-请评审以下代码实现：
+Review the following implementation:
 
-需求：{spec.get("title", "")}
-代码：
+Requirement: {spec.get("title", "")}
+Code:
 {code_summary}
 
-请生成 JSON 格式的评审报告：
+Return a JSON review report:
 {{
   "overall_score": 85,
   "issues": [
-    {{"severity": "high/medium/low", "category": "security/performance/maintainability", "description": "问题描述", "file": "文件路径"}}
+    {{"severity": "high/medium/low", "category": "security/performance/maintainability", "description": "Issue description", "file": "File path"}}
   ],
-  "suggestions": ["改进建议1", "改进建议2"],
+  "suggestions": ["Suggestion 1", "Suggestion 2"],
   "approved": true/false
 }}
 """
@@ -53,7 +56,7 @@ class ReviewerAgent:
             if report:
                 return report
         except Exception as e:
-            print(f"Reviewer Agent LLM call failed: {e}")
+            logger.error("Reviewer Agent LLM call failed: %s", e)
 
         return self._fallback_review(code)
 
@@ -70,20 +73,20 @@ class ReviewerAgent:
                 {
                     "severity": "medium",
                     "category": "maintainability",
-                    "description": "建议添加 API 文档注解",
+                    "description": "Consider adding API documentation annotations",
                     "file": "main.py",
                 },
                 {
                     "severity": "low",
                     "category": "security",
-                    "description": "建议添加请求频率限制",
+                    "description": "Consider adding request rate limiting",
                     "file": "main.py",
                 },
             ],
             "suggestions": [
-                "添加 Type hints 类型注解",
-                "增加单元测试覆盖率",
-                "添加错误处理中间件",
+                "Add type hints",
+                "Increase unit test coverage",
+                "Add error-handling middleware",
             ],
             "approved": True,
         }

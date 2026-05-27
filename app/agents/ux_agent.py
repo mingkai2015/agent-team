@@ -1,24 +1,27 @@
 import json
+import logging
 from datetime import datetime
 from typing import Dict, Any, List
 from app.agents.llm_client import LLMClient
 
+logger = logging.getLogger(__name__)
+
 
 UX_AGENT_SYSTEM_PROMPT = """
-你是一个资深交互设计师，负责用户体验和界面设计。
+You are a senior UX designer responsible for user experience and UI interaction design.
 
-你的职责：
-1. 分析需求中的用户交互场景
-2. 设计产品信息架构和用户流程
-3. 创建线框图和交互原型描述
-4. 定义界面布局和交互模式
-5. 确保用户体验的一致性和可用性
+Responsibilities:
+1. Analyze user interaction scenarios in the requirement
+2. Design information architecture and user flows
+3. Create wireframe/prototype descriptions
+4. Define layouts and interaction patterns
+5. Ensure consistency and usability
 
-技术栈：
-- 前端：React + TypeScript + Vite
-- 设计工具：Figma（描述设计规范）
+Tech stack:
+- Frontend: React + TypeScript + Vite
+- Design tool: Figma (describe design guidelines)
 
-输出必须为有效的 JSON 格式。
+Output MUST be valid JSON.
 """
 
 
@@ -34,28 +37,28 @@ class UXAgent:
         user_stories = spec.get("user_stories", [])
 
         prompt = f"""
-请为需求「{title}」生成 UX 设计方案：
+Generate a UX design proposal for the requirement "{title}":
 
-需求描述：{description}
-用户故事：{json.dumps(user_stories)}
+Requirement description: {description}
+User stories: {json.dumps(user_stories)}
 
-请生成 JSON 格式的 UX 设计：
+Return JSON:
 {{
   "information_architecture": {{
-    "pages": ["页面1", "页面2"],
-    "navigation": "导航结构描述"
+    "pages": ["Page 1", "Page 2"],
+    "navigation": "Navigation structure description"
   }},
   "user_flows": [
-    {{"name": "流程1", "steps": ["步骤1", "步骤2"]}}
+    {{"name": "Flow 1", "steps": ["Step 1", "Step 2"]}}
   ],
   "wireframes": [
-    {{"page": "页面1", "elements": ["元素1", "元素2"], "layout": "布局描述"}}
+    {{"page": "Page 1", "elements": ["Element 1", "Element 2"], "layout": "Layout description"}}
   ],
-  "interaction_patterns": ["模式1", "模式2"],
+  "interaction_patterns": ["Pattern 1", "Pattern 2"],
   "design_system": {{
-    "colors": ["主色", "辅色"],
-    "typography": "字体规范",
-    "spacing": "间距规范"
+    "colors": ["Primary", "Secondary"],
+    "typography": "Typography guidelines",
+    "spacing": "Spacing guidelines"
   }}
 }}
 """
@@ -65,7 +68,7 @@ class UXAgent:
             if design:
                 return design
         except Exception as e:
-            print(f"UX Agent LLM call failed: {e}")
+            logger.error("UX Agent LLM call failed: %s", e)
 
         return self._fallback_design(spec)
 
@@ -78,35 +81,35 @@ class UXAgent:
     def _fallback_design(self, spec: Dict[str, Any]) -> Dict[str, Any]:
         return {
             "information_architecture": {
-                "pages": ["首页", "列表页", "详情页", "表单页"],
-                "navigation": "顶部导航 + 侧边栏菜单",
+                "pages": ["Home", "List", "Detail", "Form"],
+                "navigation": "Top navigation + sidebar menu",
             },
             "user_flows": [
-                {"name": "主流程", "steps": ["登录", "浏览", "操作", "返回"]}
+                {"name": "Primary flow", "steps": ["Sign in", "Browse", "Act", "Return"]}
             ],
             "wireframes": [
                 {
-                    "page": "首页",
-                    "elements": ["Header", "Hero区域", "内容列表", "Footer"],
-                    "layout": "单列布局，响应式",
+                    "page": "Home",
+                    "elements": ["Header", "Hero", "Content list", "Footer"],
+                    "layout": "Single-column, responsive",
                 },
                 {
-                    "page": "列表页",
-                    "elements": ["搜索栏", "筛选器", "数据表格", "分页"],
-                    "layout": "左侧筛选 + 右侧列表",
+                    "page": "List",
+                    "elements": ["Search bar", "Filters", "Data table", "Pagination"],
+                    "layout": "Left filters + right results",
                 },
                 {
-                    "page": "详情页",
-                    "elements": ["基本信息", "操作按钮", "详情内容"],
-                    "layout": "卡片式布局",
+                    "page": "Detail",
+                    "elements": ["Basic info", "Action buttons", "Details"],
+                    "layout": "Card-based layout",
                 },
             ],
             "interaction_patterns": [
-                "下拉刷新",
-                "无限滚动",
-                "模态框确认",
-                "表单验证",
-                "加载状态",
+                "Pull-to-refresh",
+                "Infinite scroll",
+                "Modal confirmation",
+                "Form validation",
+                "Loading states",
             ],
             "design_system": {
                 "colors": {

@@ -1,19 +1,22 @@
 import os
 import json
+import logging
 from typing import Dict, Any, List
 from app.agents.llm_client import llm_client
 
+logger = logging.getLogger(__name__)
+
 
 TL_AGENT_SYSTEM_PROMPT = """
-你是一个资深技术负责人，负责系统架构设计和技术选型。
+You are a senior technical lead responsible for system architecture design and technology selection.
 
-你的职责：
-1. 分析需求，设计系统架构
-2. 选择合适的技术栈
-3. 设计 API 接口和数据模型
-4. 评估技术风险
+Responsibilities:
+1. Analyze requirements and design the system architecture
+2. Choose an appropriate tech stack
+3. Design APIs and data models
+4. Assess technical risks
 
-输出必须为有效的 JSON 格式。
+Output MUST be valid JSON.
 """
 
 
@@ -25,21 +28,21 @@ class TechLeadAgent:
     def design(self, spec: Dict[str, Any]) -> Dict[str, Any]:
         """Generate technical architecture and design"""
         user_prompt = f"""
-请为以下需求生成技术架构设计方案：
+Create a technical architecture/design proposal for the following requirement:
 
-需求：{spec.get("title", "")}
-详情：{spec.get("detailed_description", "")}
-用户故事：{json.dumps(spec.get("user_stories", []))}
+Title: {spec.get("title", "")}
+Details: {spec.get("detailed_description", "")}
+User stories: {json.dumps(spec.get("user_stories", []))}
 
-请生成 JSON 格式的架构设计：
+Return JSON:
 {{
-  "architecture": "系统架构描述",
-  "tech_stack": ["技术栈列表"],
-  "api_design": ["API 设计要点"],
-  "data_model": ["数据模型设计"],
-  "security": ["安全考虑"],
-  "risks": ["技术风险评估"],
-  "milestones": ["里程碑列表"]
+  "architecture": "Architecture description",
+  "tech_stack": ["Tech stack items"],
+  "api_design": ["API design notes"],
+  "data_model": ["Data model notes"],
+  "security": ["Security considerations"],
+  "risks": ["Technical risks"],
+  "milestones": ["Milestones"]
 }}
 """
         try:
@@ -48,7 +51,7 @@ class TechLeadAgent:
             if design:
                 return design
         except Exception as e:
-            print(f"TL Agent LLM call failed: {e}")
+            logger.error("TL Agent LLM call failed: %s", e)
 
         return self._fallback_design(spec)
 
@@ -60,23 +63,23 @@ class TechLeadAgent:
 
     def _fallback_design(self, spec: Dict[str, Any]) -> Dict[str, Any]:
         return {
-            "architecture": "微服务架构，使用 REST API",
+            "architecture": "Microservice-style architecture with REST APIs",
             "tech_stack": ["Python 3.11", "FastAPI", "PostgreSQL", "Redis", "Docker"],
             "api_design": [
-                "RESTful API 设计规范",
-                "版本管理: /api/v1/",
-                "认证: JWT Token",
-                "分页: limit/offset",
+                "RESTful API conventions",
+                "Versioning: /api/v1/",
+                "Auth: JWT bearer token",
+                "Pagination: limit/offset",
             ],
             "data_model": [
-                "Warehouse: 仓库(id, name, location)",
-                "Product: 商品(id, sku, name, category)",
-                "Inventory: 库存(id, warehouse_id, product_id, quantity)",
-                "Transaction: 流水(id, type, product_id, quantity, timestamp)",
+                "Warehouse: (id, name, location)",
+                "Product: (id, sku, name, category)",
+                "Inventory: (id, warehouse_id, product_id, quantity)",
+                "Transaction: (id, type, product_id, quantity, timestamp)",
             ],
-            "security": ["API 认证与授权", "输入校验", "SQL 注入防护", "日志审计"],
-            "risks": ["高并发库存扣减需考虑分布式锁", "多仓库数据一致性"],
-            "milestones": ["环境搭建", "数据模型设计", "API 实现", "测试", "部署"],
+            "security": ["AuthZ/AuthN", "Input validation", "SQL injection protection", "Audit logging"],
+            "risks": ["High-concurrency inventory updates may require distributed locking", "Multi-warehouse consistency"],
+            "milestones": ["Environment setup", "Data model design", "API implementation", "Testing", "Deployment"],
         }
 
 

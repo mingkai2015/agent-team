@@ -1,10 +1,13 @@
 import os
 import json
+import logging
 import time
 import uuid
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 from enum import Enum
+
+logger = logging.getLogger(__name__)
 
 
 class AgentPhase(str, Enum):
@@ -153,7 +156,7 @@ class Observability:
                 except:
                     pass
         except Exception as e:
-            print(f"Failed to load traces from Redis: {e}")
+            logger.error("Failed to load traces from Redis: %s", e)
 
     def _save_traces_to_redis(self):
         try:
@@ -162,7 +165,7 @@ class Observability:
                     self._traces_key, task_id, json.dumps(traces, default=str)
                 )
         except Exception as e:
-            print(f"Failed to save traces to Redis: {e}")
+            logger.error("Failed to save traces to Redis: %s", e)
 
     def _add_event(self, task_id: str, event: TraceEvent):
         if task_id not in self.traces:

@@ -1,18 +1,18 @@
 import os
 import sys
-import subprocess
 from unittest.mock import MagicMock, patch
 
 os.environ["REDIS_URL"] = "redis://localhost:6379"
 os.environ["GITLAB_MODE"] = "mock"
 os.environ["ANTHROPIC_BASE_URL"] = ""
 os.environ["ANTHROPIC_AUTH_TOKEN"] = ""
+os.environ["API_KEY"] = ""
 
 _store: dict[str, dict[str, str]] = {}
 
 
 class FakeRedis:
-    """In-memory Redis stand-in that implements the hash commands we use."""
+    """In-memory Redis stand-in for testing."""
 
     def hset(self, key, field, value):
         _store.setdefault(key, {})[field] = value
@@ -26,6 +26,9 @@ class FakeRedis:
     def hgetall(self, key):
         return _store.get(key, {})
 
+    def hdel(self, key, field):
+        return _store.get(key, {}).pop(field, None) is not None
+
     def ping(self):
         return True
 
@@ -34,8 +37,6 @@ _fake_redis_instance = FakeRedis()
 
 
 class _FakeRedisModule:
-    """Drop-in for the `redis` package: from_url returns our fake."""
-
     @staticmethod
     def from_url(*args, **kwargs):
         return _fake_redis_instance
@@ -51,7 +52,6 @@ from fastapi.testclient import TestClient
 
 
 def _fake_subprocess_run(*args, **kwargs):
-    """Prevent real Docker/git calls during tests."""
     result = MagicMock()
     result.returncode = 0
     result.stdout = b"mock output"
@@ -78,6 +78,9 @@ def _clear_store():
     from app.evaluation import evaluation
     evaluation.evaluations = []
     evaluation.task_metrics = {}
+    from app.agents.llm_client import llm_client
+    llm_client.max_retries = 1
+    llm_client.retry_delay = 0.0
 
     with patch("subprocess.run", side_effect=_fake_subprocess_run), \
          patch("app.agents.devops_agent.subprocess.run", side_effect=_fake_subprocess_run), \
@@ -87,18 +90,35 @@ def _clear_store():
 
 @pytest.fixture
 def client():
-    from app.main import app
+    from langgraph.checkpoint.memory import MemorySaver
+    from app.workflow.graph import compile_workflow
+    import app.main as main_mod
+
+    main_mod.workflow = compile_workflow(checkpointer=MemorySaver())
+
     with patch("subprocess.run", side_effect=_fake_subprocess_run), \
          patch("app.agents.devops_agent.subprocess.run", side_effect=_fake_subprocess_run), \
          patch("app.agents.gitlab_client.subprocess.run", side_effect=_fake_subprocess_run):
-        with TestClient(app) as c:
+        with TestClient(main_mod.app) as c:
             yield c
 
 
 @pytest.fixture
-def sample_requirement():
+def sample_project(client):
+    resp = client.post("/projects", json={
+        "name": "Test Project",
+        "description": "Project used for testing",
+        "gitlab_mode": "mock",
+    })
+    assert resp.status_code == 200
+    return resp.json()
+
+
+@pytest.fixture
+def sample_requirement(sample_project):
     return {
-        "title": "测试订单系统",
-        "description": "开发一个简单的订单管理系统，支持创建和查询订单",
+        "project_id": sample_project["id"],
+        "title": "Test Order System",
+        "description": "Build a simple order management system that supports creating and querying orders",
         "priority": "P1",
     }

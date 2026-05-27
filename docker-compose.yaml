@@ -1,49 +1,33 @@
-version: '3.8'
-
 services:
-  postgres:
-    image: postgres:15-alpine
-    container_name: agent-team-postgres
-    environment:
-      POSTGRES_USER: agentteam
-      POSTGRES_PASSWORD: agentteam123
-      POSTGRES_DB: agentteam
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - agent-network
-
   redis:
-    image: redis:7-alpine
+    image: redis/redis-stack-server:latest
     container_name: agent-team-redis
-    command: redis-server --appendonly yes
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
     networks:
       - agent-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   app:
     build: .
     container_name: agent-team-app
     ports:
       - "8000:8000"
-    volumes:
-      - ./public:/app/public:ro
-      - /var/run/docker.sock:/var/run/docker.sock
     env_file:
       - .env
     depends_on:
-      - postgres
-      - redis
+      redis:
+        condition: service_healthy
     networks:
       - agent-network
 
 volumes:
-  postgres_data:
   redis_data:
 
 networks:

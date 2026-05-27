@@ -1,25 +1,29 @@
 import os
 import json
+import logging
 from datetime import datetime
 from typing import Dict, Any
 from app.models import Task, TaskState
 from app.agents.llm_client import llm_client
 
+logger = logging.getLogger(__name__)
+
 
 PM_AGENT_SYSTEM_PROMPT = """
-你是一个资深产品经理，负责需求分析和拆解。
-你的职责：
-1. 理解用户需求，补充遗漏信息
-2. 将需求拆解为可执行的 User Stories
-3. 定义清晰的验收标准
-4. 评估工作量
+You are a senior product manager responsible for requirement analysis and decomposition.
 
-输出必须为有效的 JSON 格式，包含以下字段：
+Responsibilities:
+1. Understand the user need and fill in missing details
+2. Decompose the requirement into executable user stories
+3. Define clear acceptance criteria
+4. Estimate effort
+
+Output MUST be valid JSON with the following fields:
 {
-  "detailed_description": "详细的需求描述",
-  "user_stories": ["用户故事1", "用户故事2"],
-  "acceptance_criteria": ["验收标准1", "验收标准2"],
-  "estimation": "S/M/L (小/中/大)"
+  "detailed_description": "Detailed requirement description",
+  "user_stories": ["User story 1", "User story 2"],
+  "acceptance_criteria": ["Acceptance criteria 1", "Acceptance criteria 2"],
+  "estimation": "S/M/L"
 }
 """
 
@@ -34,20 +38,20 @@ class PMAgent:
         Analyze requirement using LLM and generate SPEC.md
         """
         user_prompt = f"""
-请分析以下需求，生成结构化的需求规格文档：
+Analyze the following requirement and generate a structured requirement spec document:
 
-需求标题：{requirement.get("title", "")}
-需求描述：{requirement.get("description", "")}
-优先级：{requirement.get("priority", "P2")}
+Title: {requirement.get("title", "")}
+Description: {requirement.get("description", "")}
+Priority: {requirement.get("priority", "P2")}
 
-请生成包含详细描述、用户故事、验收标准和工作量估算的 JSON 文档。
+Return a JSON document containing detailed_description, user_stories, acceptance_criteria, and estimation.
 """
 
         try:
             response = self.llm.chat(PM_AGENT_SYSTEM_PROMPT, user_prompt)
             spec = self._parse_llm_response(response, requirement)
         except Exception as e:
-            print(f"LLM call failed, using fallback: {e}")
+            logger.error("LLM call failed, using fallback: %s", e)
             spec = self._generate_fallback_spec(requirement)
 
         spec["analyzed_at"] = datetime.now().isoformat()
@@ -77,17 +81,17 @@ class PMAgent:
             "requirement_id": requirement.get("id", ""),
             "title": title,
             "description": desc,
-            "detailed_description": f"## 需求详情\n\n### 背景\n{title} 的业务需求\n\n### 功能描述\n{desc}",
+            "detailed_description": f"## Requirement details\n\n### Background\nBusiness need for {title}\n\n### Functional description\n{desc}",
             "user_stories": [
-                f"作为用户，我希望{title}，以便{desc}",
-                "作为系统管理员，我希望管理配置，以便系统正常运行",
-                "作为测试人员，我希望有验收标准，以便验证功能",
+                f"As a user, I want {title} so that {desc}",
+                "As a system administrator, I want to manage configuration so the system runs reliably",
+                "As a tester, I want clear acceptance criteria so I can verify the feature",
             ],
             "acceptance_criteria": [
-                f"功能 {title} 能够正常使用",
-                "系统响应时间在可接受范围内",
-                "关键操作有日志记录",
-                "异常情况有错误提示",
+                f"The {title} feature works end-to-end",
+                "System response time is within an acceptable range",
+                "Key operations are logged",
+                "Errors are surfaced with clear messages",
             ],
             "estimation": "M" if len(desc) < 200 else "L",
             "priority": requirement.get("priority", "P2"),

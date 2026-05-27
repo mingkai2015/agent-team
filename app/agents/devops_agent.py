@@ -1,26 +1,29 @@
 import os
 import json
+import logging
 import subprocess
 from typing import Dict, Any, List
 from datetime import datetime
 from app.agents.llm_client import llm_client
 
+logger = logging.getLogger(__name__)
+
 
 DEVOPS_AGENT_SYSTEM_PROMPT = """
-你是一个资深 DevOps 工程师，负责 CI/CD 流水线和部署自动化。
+You are a senior DevOps engineer responsible for CI/CD and deployment automation.
 
-技术栈：
-- 前端：React + TypeScript + Vite
-- 后端：SpringBoot 3.x + Java 17 + Maven
-- 数据库：PostgreSQL
+Tech stack:
+- Frontend: React + TypeScript + Vite
+- Backend: Spring Boot 3.x + Java 17 + Maven
+- Database: PostgreSQL
 
-你的职责：
-1. 设计 CI/CD 流水线（GitLab CI）
-2. 编写 Docker 配置（前端 + 后端）
-3. 编写 docker-compose.yml
-4. 部署到本地 Docker
+Responsibilities:
+1. Design a CI/CD pipeline (GitLab CI)
+2. Write Docker configs (frontend + backend)
+3. Write docker-compose.yml
+4. Deploy locally via Docker
 
-输出必须为有效的 JSON 格式。
+Output MUST be valid JSON.
 """
 
 
@@ -62,7 +65,7 @@ class DevOpsAgent:
             with open(file_path, "w", encoding="utf-8") as f:
                 f.write(file.get("content", ""))
 
-        print(f"Code written to: {workspace}")
+        logger.info("Code written to: %s", workspace)
 
     def _deploy_to_docker(
         self, spec: Dict[str, Any], code: List[Dict[str, Any]]
@@ -204,8 +207,8 @@ CMD ["nginx", "-g", "daemon off;"]
                 timeout=600,
             )
 
-            print(f"Docker build output: {result.stdout.decode()}")
-            print(f"Docker build errors: {result.stderr.decode()}")
+            logger.info("Docker build output: %s", result.stdout.decode())
+            logger.info("Docker build errors: %s", result.stderr.decode())
 
             return {
                 "deployment_status": "success",
@@ -215,7 +218,7 @@ CMD ["nginx", "-g", "daemon off;"]
                 "docker_compose_path": compose_path,
             }
         except Exception as e:
-            print(f"Docker deployment failed: {e}")
+            logger.error("Docker deployment failed: %s", e)
             return {
                 "deployment_status": "failed",
                 "error": str(e),
@@ -294,11 +297,11 @@ deploy:
     - main
 """,
             "deployment_steps": [
-                "1. 写入代码到本地目录",
-                "2. 创建 Docker 配置文件",
-                "3. 执行 docker-compose build",
-                "4. 执行 docker-compose up -d",
-                "5. 检查容器运行状态",
+                "1. Write generated code to local workspace",
+                "2. Create Docker configuration files",
+                "3. Run docker-compose build",
+                "4. Run docker-compose up -d",
+                "5. Verify container health",
             ],
             "health_check": {
                 "frontend": "http://localhost:3000",

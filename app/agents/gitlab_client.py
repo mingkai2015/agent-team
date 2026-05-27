@@ -22,12 +22,21 @@ class GitLabClient:
     GitLab API client (Mock mode for POC)
     """
 
-    def __init__(self):
-        self.mode = os.getenv("GITLAB_MODE", "mock")
-        self.base_url = os.getenv("GITLAB_URL", "https://gitlab.com")
-        self.token = os.getenv("GITLAB_TOKEN", "")
-        self.project_id = os.getenv("GITLAB_PROJECT_ID", "")
-        self.gitlab_repo_url = os.getenv("GITLAB_REPO_URL", "")
+    def __init__(self, config: dict = None):
+        if config:
+            self.mode = config.get("gitlab_mode", "mock")
+            self.base_url = config.get("gitlab_url", "https://gitlab.com")
+            self.token = config.get("gitlab_token", "")
+            self.project_id = config.get("gitlab_project_id", "")
+            self.gitlab_repo_url = config.get("gitlab_repo_url", "")
+            self.main_branch = config.get("main_branch", "main")
+        else:
+            self.mode = os.getenv("GITLAB_MODE", "mock")
+            self.base_url = os.getenv("GITLAB_URL", "https://gitlab.com")
+            self.token = os.getenv("GITLAB_TOKEN", "")
+            self.project_id = os.getenv("GITLAB_PROJECT_ID", "")
+            self.gitlab_repo_url = os.getenv("GITLAB_REPO_URL", "")
+            self.main_branch = "main"
 
     def _check_response(self, response, url: str) -> Dict[str, Any]:
         if response.status_code >= 400:

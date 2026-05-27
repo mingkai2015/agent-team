@@ -1,7 +1,10 @@
 import os
 import time
+import logging
 import httpx
 from typing import Dict, Any, Optional
+
+logger = logging.getLogger(__name__)
 
 
 class LLMClient:
@@ -30,12 +33,16 @@ class LLMClient:
                 last_error = e
                 if attempt < retries - 1:
                     delay = self.retry_delay * (2**attempt)
-                    print(
-                        f"LLM call failed (attempt {attempt + 1}/{retries}), retrying in {delay}s: {e}"
+                    logger.warning(
+                        "LLM call failed (attempt %s/%s), retrying in %ss: %s",
+                        attempt + 1,
+                        retries,
+                        delay,
+                        e,
                     )
                     time.sleep(delay)
                 else:
-                    print(f"LLM call failed after {retries} attempts: {e}")
+                    logger.error("LLM call failed after %s attempts: %s", retries, e)
 
         raise last_error
 

@@ -1,19 +1,22 @@
 import os
 import json
+import logging
 from typing import Dict, Any, List
 from app.agents.llm_client import llm_client
 
+logger = logging.getLogger(__name__)
+
 
 QA_AGENT_SYSTEM_PROMPT = """
-你是一个资深 QA 工程师，负责测试规划和缺陷管理。
+You are a senior QA engineer responsible for test planning and defect management.
 
-你的职责：
-1. 基于验收标准设计测试用例
-2. 执行功能测试和回归测试
-3. 记录缺陷并跟踪修复
-4. 生成测试报告
+Responsibilities:
+1. Design test cases based on acceptance criteria
+2. Execute functional and regression testing
+3. Record defects and track fixes
+4. Generate test reports
 
-输出必须为有效的 JSON 格式。
+Output MUST be valid JSON.
 """
 
 
@@ -29,21 +32,21 @@ class QAAgent:
         acceptance_criteria = spec.get("acceptance_criteria", [])
 
         user_prompt = f"""
-请为以下需求生成测试计划：
+Create a test plan for the following requirement:
 
-需求：{spec.get("title", "")}
-验收标准：{json.dumps(acceptance_criteria)}
+Requirement: {spec.get("title", "")}
+Acceptance criteria: {json.dumps(acceptance_criteria)}
 
-请生成 JSON 格式的测试计划：
+Return JSON:
 {{
   "test_cases": [
-    {{"id": "TC-001", "name": "测试用例名称", "description": "描述", "steps": ["步骤1", "步骤2"], "expected": "预期结果"}}
+    {{"id": "TC-001", "name": "Test case name", "description": "Description", "steps": ["Step 1", "Step 2"], "expected": "Expected result"}}
   ],
   "test_results": [
-    {{"case_id": "TC-001", "status": "pass/fail", "notes": "备注"}}
+    {{"case_id": "TC-001", "status": "pass/fail", "notes": "Notes"}}
   ],
-  "coverage": "覆盖率描述",
-  "summary": "测试总结"
+  "coverage": "Coverage summary",
+  "summary": "Test summary"
 }}
 """
         try:
@@ -52,7 +55,7 @@ class QAAgent:
             if report:
                 return report
         except Exception as e:
-            print(f"QA Agent LLM call failed: {e}")
+            logger.error("QA Agent LLM call failed: %s", e)
 
         return self._fallback_test(spec)
 
@@ -67,33 +70,33 @@ class QAAgent:
             "test_cases": [
                 {
                     "id": "TC-001",
-                    "name": "验证商品入库功能",
-                    "description": "测试商品能够正确入库",
-                    "steps": ["调用 POST /api/items", "检查返回数据"],
-                    "expected": "返回 200 和商品信息",
+                    "name": "Verify item creation",
+                    "description": "Ensure an item can be created successfully",
+                    "steps": ["Call POST /api/items", "Verify response payload"],
+                    "expected": "Returns 200 and the created item",
                 },
                 {
                     "id": "TC-002",
-                    "name": "验证商品列表查询",
-                    "description": "测试获取商品列表",
-                    "steps": ["调用 GET /api/items", "检查返回列表"],
-                    "expected": "返回 200 和商品列表",
+                    "name": "Verify item listing",
+                    "description": "Ensure the item list can be retrieved",
+                    "steps": ["Call GET /api/items", "Verify list payload"],
+                    "expected": "Returns 200 and an item list",
                 },
                 {
                     "id": "TC-003",
-                    "name": "验证库存扣减",
-                    "description": "测试库存扣减逻辑",
-                    "steps": ["调用出库接口", "检查库存变化"],
-                    "expected": "库存正确扣减",
+                    "name": "Verify inventory decrement",
+                    "description": "Ensure inventory decrement logic works correctly",
+                    "steps": ["Call decrement endpoint", "Verify inventory change"],
+                    "expected": "Inventory is decremented correctly",
                 },
             ],
             "test_results": [
-                {"case_id": "TC-001", "status": "pass", "notes": "功能正常"},
-                {"case_id": "TC-002", "status": "pass", "notes": "功能正常"},
-                {"case_id": "TC-003", "status": "pass", "notes": "功能正常"},
+                {"case_id": "TC-001", "status": "pass", "notes": "OK"},
+                {"case_id": "TC-002", "status": "pass", "notes": "OK"},
+                {"case_id": "TC-003", "status": "pass", "notes": "OK"},
             ],
-            "coverage": "核心功能覆盖率 100%",
-            "summary": "所有测试用例通过，系统可以发布",
+            "coverage": "Core paths covered (example: 100%)",
+            "summary": "All test cases passed; the system is ready for deployment",
         }
 
 

@@ -1,28 +1,31 @@
 import os
 import json
+import logging
 from datetime import datetime
 from typing import Dict, Any, List
 from app.agents.llm_client import LLMClient
 
+logger = logging.getLogger(__name__)
+
 
 DEV_AGENT_SYSTEM_PROMPT = """
-你是一个资深开发工程师，负责根据需求规格文档实现功能代码。
+You are a senior software engineer. Implement feature code based on the requirement spec.
 
-技术栈要求：
-- 前端：React + TypeScript + Vite
-- 后端：SpringBoot 3.x + Java 17 + Maven
-- 数据库：PostgreSQL
+Tech stack requirements:
+- Frontend: React + TypeScript + Vite
+- Backend: Spring Boot 3.x + Java 17 + Maven
+- Database: PostgreSQL
 
-你的工作流程：
-1. 理解需求规格
-2. 生成技术实现计划（明确技术栈）
-3. 实现后端代码（Controller, Service, Repository, Entity, DTO）
-4. 实现前端代码（React 组件、API 调用）
-5. 生成单元测试
+Workflow:
+1. Understand the requirement spec
+2. Produce a technical implementation plan (explicit tech stack)
+3. Implement backend code (Controller, Service, Repository, Entity, DTO)
+4. Implement frontend code (React components, API calls)
+5. Generate unit tests
 
-输出格式要求：
-- 实现计划：JSON 格式，包含 architecture, tech_stack, api_design, data_model
-- 代码产出：JSON 数组，每个文件包含 path, content, language (java/typescript/javascript)
+Output format requirements:
+- Implementation plan: JSON with architecture, tech_stack, api_design, data_model
+- Code output: JSON array; each item includes path, content, language (java/typescript/javascript)
 """
 
 
@@ -53,18 +56,18 @@ class DevAgent:
         description = spec.get("detailed_description", "")
 
         prompt = f"""
-作为技术负责人，请为以下需求生成技术实现计划：
+As the technical lead, create a technical implementation plan for the following requirement:
 
-需求：{title}
-详情：{description}
+Requirement: {title}
+Details: {description}
 
-请生成 JSON 格式的计划：
+Return a JSON plan:
 {{
-  "architecture": "系统架构描述",
-  "tech_stack": ["技术栈列表"],
-  "api_design": ["API 设计要点"],
-  "data_model": ["数据模型设计"],
-  "milestones": ["里程碑1", "里程碑2"]
+  "architecture": "Architecture description",
+  "tech_stack": ["Tech stack items"],
+  "api_design": ["API design notes"],
+  "data_model": ["Data model notes"],
+  "milestones": ["Milestone 1", "Milestone 2"]
 }}
 """
         try:
@@ -82,13 +85,13 @@ class DevAgent:
         title = spec.get("title", "")
 
         prompt = f"""
-请为需求「{title}」生成任务列表：
+Generate a task list for the requirement "{title}":
 
-输出 JSON 格式：
+Return JSON:
 [
-  {{"id": "task-1", "description": "任务描述", "phase": "setup", "status": "pending"}},
-  {{"id": "task-2", "description": "任务描述", "phase": "implementation", "status": "pending"}},
-  {{"id": "task-3", "description": "任务描述", "phase": "testing", "status": "pending"}}
+  {{"id": "task-1", "description": "Task description", "phase": "setup", "status": "pending"}},
+  {{"id": "task-2", "description": "Task description", "phase": "implementation", "status": "pending"}},
+  {{"id": "task-3", "description": "Task description", "phase": "testing", "status": "pending"}}
 ]
 """
         try:
@@ -97,7 +100,7 @@ class DevAgent:
             if tasks and isinstance(tasks, list):
                 return tasks
         except Exception as e:
-            print(f"Dev Agent tasks generation failed: {e}")
+            logger.error("Dev Agent tasks generation failed: %s", e)
 
         return self._fallback_tasks(spec)
 
@@ -106,13 +109,13 @@ class DevAgent:
         title = spec.get("title", "")
 
         prompt = f"""
-请为需求「{title}」生成示例代码结构。
+Generate an example code structure for the requirement "{title}".
 
-输出 JSON 格式：
+Return JSON:
 [
-  {{"path": "main.py", "content": "# 代码内容"}},
-  {{"path": "models.py", "content": "# 代码内容"}},
-  {{"path": "test_main.py", "content": "# 测试代码"}}
+  {{"path": "main.py", "content": "# code"}},
+  {{"path": "models.py", "content": "# code"}},
+  {{"path": "test_main.py", "content": "# tests"}}
 ]
 """
         try:
@@ -121,7 +124,7 @@ class DevAgent:
             if code and isinstance(code, list):
                 return code
         except Exception as e:
-            print(f"Dev Agent code generation failed: {e}")
+            logger.error("Dev Agent code generation failed: %s", e)
 
         return self._fallback_code(spec)
 
@@ -143,7 +146,7 @@ class DevAgent:
 
     def _fallback_plan(self, spec: Dict[str, Any]) -> Dict[str, Any]:
         return {
-            "architecture": "前后端分离架构，前端 React，后端 SpringBoot REST API",
+            "architecture": "Decoupled frontend/backend architecture: React frontend + Spring Boot REST API backend",
             "tech_stack": [
                 "React 18",
                 "TypeScript",
@@ -154,44 +157,44 @@ class DevAgent:
                 "PostgreSQL",
             ],
             "api_design": [
-                "GET /api/items - 获取列表",
-                "POST /api/items - 创建",
-                "PUT /api/items/{id} - 更新",
-                "DELETE /api/items/{id} - 删除",
+                "GET /api/items - list items",
+                "POST /api/items - create item",
+                "PUT /api/items/{id} - update item",
+                "DELETE /api/items/{id} - delete item",
             ],
             "data_model": ["Item: id, name, quantity, createdAt, updatedAt"],
-            "milestones": ["后端搭建", "前端搭建", "API 对接", "测试部署"],
+            "milestones": ["Backend setup", "Frontend setup", "API integration", "Testing & deployment"],
         }
 
     def _fallback_tasks(self, spec: Dict[str, Any]) -> List[Dict[str, Any]]:
         return [
             {
                 "id": "task-1",
-                "description": "创建项目结构",
+                "description": "Create project structure",
                 "phase": "setup",
                 "status": "completed",
             },
             {
                 "id": "task-2",
-                "description": "实现数据模型",
+                "description": "Implement data model",
                 "phase": "implementation",
                 "status": "completed",
             },
             {
                 "id": "task-3",
-                "description": "实现 API 端点",
+                "description": "Implement API endpoints",
                 "phase": "implementation",
                 "status": "pending",
             },
             {
                 "id": "task-4",
-                "description": "编写单元测试",
+                "description": "Write unit tests",
                 "phase": "testing",
                 "status": "pending",
             },
             {
                 "id": "task-5",
-                "description": "部署验证",
+                "description": "Deployment verification",
                 "phase": "deploy",
                 "status": "pending",
             },
